@@ -161,7 +161,7 @@ const STAGES = {
   async review(config, run) {
     const diff = tail(git(run.worktree, 'diff', `${run.base}..HEAD`), 60_000);
     const lessons = readLessons(config, run.repoName);
-    const { text, meta } = await agent(config, run, 'review', reviewPrompt(run.issue, diff, { lessons }));
+    const { text, meta } = await agent(config, run, 'review', reviewPrompt(run.issue, diff, { lessons, verify: repoOf(config, run).verify }));
     const r = parseJson(text);
     if (!r?.verdict) {
       record(run, 'review', 'unparseable', meta);

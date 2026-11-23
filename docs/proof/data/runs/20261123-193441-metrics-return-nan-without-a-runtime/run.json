@@ -1,0 +1,133 @@
+{
+  "id": "20261123-193441-metrics-return-nan-without-a-runtime",
+  "issue": {
+    "title": "Metrics: return NaN without a RuntimeWarning on empty input and cover ECE edge cases",
+    "body": "Deferred minors from `docs/handover/ledger/progress.md` (Task 1 and Task 2), in the eval metrics:\n\n1. Empty input currently yields NaN together with a NumPy `RuntimeWarning`. Return NaN explicitly, with no warning, for every metric that divides by the number of rows.\n2. ECE: the clamp for `p_max == 1.0` (must land in the last bin) and the sum over several non-empty bins are untested. Add tests with pinned numbers.\n3. `test_autonomous_error_counts_only_singletons` also asserts `automation_rate`. Split it so each test checks one thing.\n\nNo change to any reported number for non-empty input.\n",
+    "url": "https://github.com/siddharthprakash1/surety/issues/2",
+    "github": "siddharthprakash1/surety",
+    "number": 2,
+    "source": "gh:siddharthprakash1/surety#2",
+    "repoName": "surety"
+  },
+  "repoName": "surety",
+  "repo": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\repos\\surety",
+  "github": "siddharthprakash1/surety",
+  "worktree": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\workspaces\\20261123-193441-metrics-return-nan-without-a-runtime",
+  "branch": "factory/20261123-193441-metrics-return-nan-without-a-runtime",
+  "base": "006f18051562303d0f3e0fdbdbd9b6651bd2413c",
+  "baseBranch": "main",
+  "openPr": true,
+  "status": "ready_for_review",
+  "next": "deliver",
+  "iteration": 2,
+  "budgetUsd": 3,
+  "costUsd": 0.05981619,
+  "startedAt": "2026-11-23T19:34:44.820Z",
+  "lastSeenAt": "2026-11-23T19:34:44.820Z",
+  "feedbackLog": [
+    {
+      "source": "code review",
+      "text": "Code review requested changes: The scalar metrics and ECE now return NaN without a warning on empty input, and the ECE tests pin correct values. risk_coverage_curve still divides by the row count via act.mean() and (act & wrong).mean(), so empty input still emits a RuntimeWarning, and the issue asks for every such metric to be covered.\n- src/surety/calib/metrics.py:67-78 risk_coverage_curve: act.mean() and (act & wrong).mean() on empty arrays emit NumPy's 'Mean of empty slice' RuntimeWarning. Route these through _mean, or return NaN for acted and error_rate_all when len(probs) == 0, so that the issue's 'every metric that divides by the number of rows' holds.\n- tests/test_metrics.py EMPTY_METRIC_CALLS: add a risk_coverage_curve([], [], [...]) case, or a separate test, asserting no RuntimeWarning and NaN for the empty-input fields, so the gap above is covered by a test."
+    }
+  ],
+  "events": [
+    {
+      "at": "2026-11-23T19:35:02.697Z",
+      "stage": "triage",
+      "outcome": "automate/low",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.00822665,
+      "durationMs": 17872,
+      "tokensIn": 132659,
+      "tokensOut": 2320
+    },
+    {
+      "at": "2026-11-23T19:36:52.427Z",
+      "stage": "implement",
+      "outcome": "attempt 1 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.014138230000000002,
+      "durationMs": 109206,
+      "tokensIn": 247464,
+      "tokensOut": 9094
+    },
+    {
+      "at": "2026-11-23T19:37:19.824Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 27395
+    },
+    {
+      "at": "2026-11-23T19:37:47.266Z",
+      "stage": "review",
+      "outcome": "request_changes",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.0107626,
+      "durationMs": 27371,
+      "tokensIn": 245416,
+      "tokensOut": 4221
+    },
+    {
+      "at": "2026-11-23T19:39:17.886Z",
+      "stage": "implement",
+      "outcome": "attempt 2 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.013786360000000001,
+      "durationMs": 90329,
+      "tokensIn": 415698,
+      "tokensOut": 5357
+    },
+    {
+      "at": "2026-11-23T19:39:43.252Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 25364
+    },
+    {
+      "at": "2026-11-23T19:40:03.076Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.008023060000000002,
+      "durationMs": 19765,
+      "tokensIn": 93076,
+      "tokensOut": 3021
+    },
+    {
+      "at": "2026-11-23T19:40:09.573Z",
+      "stage": "deliver",
+      "outcome": "pr opened"
+    },
+    {
+      "at": "2026-11-23T19:40:19.506Z",
+      "stage": "learn",
+      "outcome": "lessons updated",
+      "model": "haiku",
+      "costUsd": 0.00487929,
+      "durationMs": 9930
+    }
+  ],
+  "triage": {
+    "decision": "automate",
+    "complexity": "low",
+    "reason": "Two files, one obvious pattern: guard the row-averaging metrics for empty input so they return NaN without a warning, and add pinned ECE tests and a split test. Non-empty outputs are unchanged, so the change is verifiable by the existing and new tests.",
+    "plan": "Edit src/surety/calib/metrics.py: add an empty-input guard (return float('nan') when len is 0) to accuracy, brier, confident_error_rate, coverage, mean_set_size, automation_rate and autonomous_error_rate, ideally via one helper. Decide whether ece should also return NaN on empty input for consistency; it currently returns 0.0 without a warning, so flag this in the PR. Edit tests/test_metrics.py: add ECE tests with hand-computed pinned values covering p_max == 1.0 landing in the last bin and a sum over several non-empty bins; add empty-input tests asserting NaN with no RuntimeWarning (pytest.warns(None) or warnings as errors); split test_autonomous_error_counts_only_singletons into an automation_rate test and an autonomous_error_rate test."
+  },
+  "verifyLog": "$ uv run pytest -q\n........................................................................ [ 36%]\r\n........................................................................ [ 73%]\r\n...................................................                      [100%]\r\n195 passed, 1 skipped in 22.88s\r\n\n",
+  "review": {
+    "verdict": "approve",
+    "summary": "The change returns NaN without a RuntimeWarning for empty input across the row-dividing metrics, leaves non-empty results unchanged, and adds ECE edge-case tests whose pinned values I verified by hand. I could not run pytest because the Bash call was denied, so the test results are unverified.",
+    "comments": []
+  },
+  "feedback": "Code review requested changes: The scalar metrics and ECE now return NaN without a warning on empty input, and the ECE tests pin correct values. risk_coverage_curve still divides by the row count via act.mean() and (act & wrong).mean(), so empty input still emits a RuntimeWarning, and the issue asks for every such metric to be covered.\n- src/surety/calib/metrics.py:67-78 risk_coverage_curve: act.mean() and (act & wrong).mean() on empty arrays emit NumPy's 'Mean of empty slice' RuntimeWarning. Route these through _mean, or return NaN for acted and error_rate_all when len(probs) == 0, so that the issue's 'every metric that divides by the number of rows' holds.\n- tests/test_metrics.py EMPTY_METRIC_CALLS: add a risk_coverage_curve([], [], [...]) case, or a separate test, asserting no RuntimeWarning and NaN for the empty-input fields, so the gap above is covered by a test.",
+  "pr": "https://github.com/siddharthprakash1/surety/pull/3",
+  "note": "https://github.com/siddharthprakash1/surety/pull/3",
+  "endedAt": "2026-11-23T19:40:09.574Z",
+  "learnedCount": 1,
+  "notifiedPr": true
+}

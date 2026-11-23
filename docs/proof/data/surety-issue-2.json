@@ -1,0 +1,39 @@
+{
+  "author": {
+    "id": "U_kgDOBYJ1aw",
+    "is_bot": false,
+    "login": "siddharthprakash1",
+    "name": "Siddharth Prakash"
+  },
+  "body": "Deferred minors from `docs/handover/ledger/progress.md` (Task 1 and Task 2), in the eval metrics:\n\n1. Empty input currently yields NaN together with a NumPy `RuntimeWarning`. Return NaN explicitly, with no warning, for every metric that divides by the number of rows.\n2. ECE: the clamp for `p_max == 1.0` (must land in the last bin) and the sum over several non-empty bins are untested. Add tests with pinned numbers.\n3. `test_autonomous_error_counts_only_singletons` also asserts `automation_rate`. Split it so each test checks one thing.\n\nNo change to any reported number for non-empty input.\n",
+  "comments": [
+    {
+      "id": "IC_kwDOVvPHt88AAAABp-eFbw",
+      "author": {
+        "login": "siddharthprakash1"
+      },
+      "authorAssociation": "OWNER",
+      "body": "**Factory: pull request ready.** https://github.com/siddharthprakash1/surety/pull/3\n\n_Run `20261123-193441-metrics-return-nan-without-a-runtime`, cost so far $0.06._\n\n<!-- software-factory -->",
+      "createdAt": "2026-11-23T19:40:20Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/siddharthprakash1/surety/issues/2#issuecomment-7111935343",
+      "viewerDidAuthor": true
+    }
+  ],
+  "createdAt": "2026-11-23T19:34:30Z",
+  "labels": [
+    {
+      "id": "LA_kwDOVvPHt88AAAADEoxguA",
+      "name": "factory",
+      "description": "Picked up by the software factory",
+      "color": "5319e7"
+    }
+  ],
+  "number": 2,
+  "state": "OPEN",
+  "title": "Metrics: return NaN without a RuntimeWarning on empty input and cover ECE edge cases",
+  "url": "https://github.com/siddharthprakash1/surety/issues/2"
+}

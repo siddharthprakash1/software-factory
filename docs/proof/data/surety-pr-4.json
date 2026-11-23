@@ -1,0 +1,97 @@
+{
+  "additions": 48,
+  "author": {
+    "id": "U_kgDOBYJ1aw",
+    "is_bot": false,
+    "login": "siddharthprakash1",
+    "name": "Siddharth Prakash"
+  },
+  "baseRefName": "main",
+  "body": "Closes #1\n\nProduced by the software factory (run `20261123-194022-supervisor-parser-check-none-before-`). Comment on this PR to have it revised.\n\n- Attempts: 1, cost: $0.034\n- Triage: automate / low - Four small, well-specified fixes to the parse logic in one module plus one test file; the current behaviour and the failing cases are reproducible by reading the code. Tests have not been run.\n- Review: The change implements all four requested parser fixes, confined to the supervisor client and its tests. I could not run the suite (permission denied), so the verdict rests on reading the regex ordering and the httpx_mock usage against the code.\n\n## Changes\n```\nsrc/surety/supervise/client.py | 14 ++++++++------\n tests/test_supervisor.py       | 40 ++++++++++++++++++++++++++++++++++++++++\n 2 files changed, 48 insertions(+), 6 deletions(-)\n```\n\n## Verification\n```\n$ uv run pytest -q\n........................................................................ [ 37%]\r\n........................................................................ [ 74%]\r\n..................................................                       [100%]\r\n194 passed, 1 skipped in 26.71s\r\n\n\n```",
+  "changedFiles": 2,
+  "comments": [
+    {
+      "id": "IC_kwDOVvPHt88AAAABp-i_2A",
+      "author": {
+        "login": "siddharthprakash1"
+      },
+      "authorAssociation": "OWNER",
+      "body": "Revert the lookbehind change in `_is_none` to `(?<![\\w-])`: only candidate ids need to accept a leading hyphen, the issue did not ask for `-NONE` to count as an abstention. Add a parametrized case for `E1 -NONE` that expects `E1` and not abstained.",
+      "createdAt": "2026-11-23T19:43:40Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/siddharthprakash1/surety/pull/4#issuecomment-7112015832",
+      "viewerDidAuthor": true
+    },
+    {
+      "id": "IC_kwDOVvPHt88AAAABp-mv1Q",
+      "author": {
+        "login": "siddharthprakash1"
+      },
+      "authorAssociation": "OWNER",
+      "body": "**Factory: revised.** The change implements all four parser fixes in the supervisor module: NONE is checked first, candidates outside state.options are dropped, hyphen-prefixed ids parse, and parse tests are added. Traced by hand, all new and existing cases should pass, but the test suite was not executed because running pytest was denied.\n\n_Run `20261123-194022-supervisor-parser-check-none-before-`, cost so far $0.06._\n\n<!-- software-factory -->",
+      "createdAt": "2026-11-23T19:46:10Z",
+      "includesCreatedEdit": false,
+      "isMinimized": false,
+      "minimizedReason": "",
+      "reactionGroups": [],
+      "url": "https://github.com/siddharthprakash1/surety/pull/4#issuecomment-7112077269",
+      "viewerDidAuthor": true
+    }
+  ],
+  "commits": [
+    {
+      "authoredDate": "2026-11-23T19:42:03Z",
+      "authors": [
+        {
+          "email": "iamsid0011@gmail.com",
+          "id": "U_kgDOBYJ1aw",
+          "login": "siddharthprakash1",
+          "name": "Siddharth Prakash"
+        }
+      ],
+      "committedDate": "2026-11-23T19:42:03Z",
+      "messageBody": "…t ids not in state.options (attempt 1)",
+      "messageHeadline": "factory: Supervisor parser: check NONE before candidate ids and rejec…",
+      "oid": "58852bc411c5b618b6ba2bb565d0a36c67fd80df"
+    },
+    {
+      "authoredDate": "2026-11-23T19:44:56Z",
+      "authors": [
+        {
+          "email": "iamsid0011@gmail.com",
+          "id": "U_kgDOBYJ1aw",
+          "login": "siddharthprakash1",
+          "name": "Siddharth Prakash"
+        }
+      ],
+      "committedDate": "2026-11-23T19:44:56Z",
+      "messageBody": "…t ids not in state.options (attempt 1)",
+      "messageHeadline": "factory: Supervisor parser: check NONE before candidate ids and rejec…",
+      "oid": "18fd4c98008b8a87bbd8a398feaf906aa3e68d1a"
+    }
+  ],
+  "createdAt": "2026-11-23T19:43:15Z",
+  "deletions": 5,
+  "files": [
+    {
+      "path": "src/surety/supervise/client.py",
+      "additions": 7,
+      "deletions": 5,
+      "changeType": "MODIFIED"
+    },
+    {
+      "path": "tests/test_supervisor.py",
+      "additions": 41,
+      "deletions": 0,
+      "changeType": "MODIFIED"
+    }
+  ],
+  "headRefName": "factory/20261123-194022-supervisor-parser-check-none-before-",
+  "number": 4,
+  "state": "OPEN",
+  "title": "Supervisor parser: check NONE before candidate ids and reject ids not in state.options",
+  "url": "https://github.com/siddharthprakash1/surety/pull/4"
+}

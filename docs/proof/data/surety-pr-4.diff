@@ -1,0 +1,96 @@
+diff --git a/src/surety/supervise/client.py b/src/surety/supervise/client.py
+index abea5fe..dc05fc0 100644
+--- a/src/surety/supervise/client.py
++++ b/src/surety/supervise/client.py
+@@ -24,7 +24,7 @@ def _pattern(allowed: list[str]) -> str:
+ def _parse(text: str, allowed: list[str], last: bool = False) -> str | None:
+     if not allowed:
+         return None
+-    found = re.findall(rf"(?<![\w-])(?:{_pattern(allowed)})(?![\w-])", text)
++    found = re.findall(rf"(?<!\w)(?:{_pattern(allowed)})(?![\w-])", text)
+     return (found[-1] if last else found[0]) if found else None
+ 
+ 
+@@ -69,11 +69,13 @@ def _complete(self, messages: list[dict]) -> tuple[str, Usage]:
+         return text, usage
+ 
+     def choose(self, state: DecisionState, candidate_ids: list[str] | None = None) -> tuple[str | None, Usage]:
+-        allowed = candidate_ids if candidate_ids is not None else [o.id for o in state.options]
++        known = [o.id for o in state.options]
++        allowed = [i for i in (candidate_ids if candidate_ids is not None else known) if i in known]
+         text, usage = self._complete(build_choose_prompt(state, candidate_ids))
+-        chosen = _parse(text, allowed, last=usage.fallback_parsed)
+-        usage.abstained = chosen is None and _is_none(text)
+-        return chosen, usage
++        if _is_none(text):
++            usage.abstained = True
++            return None, usage
++        return _parse(text, allowed, last=usage.fallback_parsed), usage
+ 
+     def slot_value(self, state: DecisionState, element_id: str) -> tuple[str | None, Usage]:
+         text, usage = self._complete(build_slot_prompt(state, element_id))
+diff --git a/tests/test_supervisor.py b/tests/test_supervisor.py
+index dbff2ec..9a9ce50 100644
+--- a/tests/test_supervisor.py
++++ b/tests/test_supervisor.py
+@@ -1,5 +1,8 @@
+ import json
+ 
++import httpx
++import pytest
++
+ from surety.supervise import MockSupervisor, Supervisor
+ from surety.types import DecisionState, Option
+ 
+@@ -10,6 +13,10 @@ def _state():
+     )
+ 
+ 
++def _ids_state():
++    return DecisionState("page text", "pick one", [Option(i, i) for i in ("E1", "E12", "a1")])
++
++
+ def _reply(httpx_mock, content, usage=None):
+     body = {"choices": [{"message": {"content": content}}]}
+     if usage is not None:
+@@ -49,6 +56,40 @@ def test_choose_none_and_disallowed_candidate(httpx_mock):
+     assert _sup().choose(_state(), ["a1"])[0] is None
+ 
+ 
++@pytest.mark.parametrize(
++    "text, expected, abstained",
++    [
++        ("E1", "E1", False),
++        ("E12", "E12", False),
++        ("E1.", "E1", False),
++        ("E12.", "E12", False),
++        ("Answer: (E1), final.", "E1", False),
++        ("NONE, not a1", None, True),
++        ("a1, NONE", None, True),
++        ("-E1", "E1", False),
++        ("E1 -NONE", "E1", False),
++        ("E9", None, False),
++    ],
++)
++def test_choose_parse_cases(httpx_mock, text, expected, abstained):
++    _reply(httpx_mock, text)
++    chosen, usage = _sup().choose(_ids_state())
++    assert chosen == expected and usage.abstained is abstained
++
++
++def test_choose_drops_candidate_not_in_options(httpx_mock):
++    _reply(httpx_mock, "X9")
++    assert _sup().choose(_ids_state(), ["X9", "E1"])[0] is None
++    _reply(httpx_mock, "E1")
++    assert _sup().choose(_ids_state(), ["X9", "E1"])[0] == "E1"
++
++
++def test_choose_propagates_http_error(httpx_mock):
++    httpx_mock.add_response(url="http://sup/v1/chat/completions", status_code=500, json={"error": "boom"})
++    with pytest.raises(httpx.HTTPStatusError):
++        _sup().choose(_state())
++
++
+ def test_usage_from_response(httpx_mock):
+     _reply(httpx_mock, "a1", {"prompt_tokens": 12, "completion_tokens": 3})
+     _, u = _sup().choose(_state())

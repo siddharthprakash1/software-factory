@@ -1,0 +1,3 @@
+* text=auto
+docs/proof/data/** -text
+docs/proof/images/** binary

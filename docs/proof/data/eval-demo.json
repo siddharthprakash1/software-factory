@@ -1,0 +1,90 @@
+{
+  "suite": "demo",
+  "variants": [
+    "default",
+    "review-sonnet",
+    "all-haiku"
+  ],
+  "summary": {
+    "default": {
+      "cases": 2,
+      "delivered": 2,
+      "accepted": 2,
+      "avg attempts": 1,
+      "total cost": "$0.046",
+      "avg secs": 55
+    },
+    "review-sonnet": {
+      "cases": 2,
+      "delivered": 2,
+      "accepted": 2,
+      "avg attempts": 1,
+      "total cost": "$0.228",
+      "avg secs": 48
+    },
+    "all-haiku": {
+      "cases": 2,
+      "delivered": 2,
+      "accepted": 2,
+      "avg attempts": 1,
+      "total cost": "$0.044",
+      "avg secs": 55
+    }
+  },
+  "results": [
+    {
+      "variant": "default",
+      "case": "001-duration-edge-cases.md",
+      "status": "ready_for_review",
+      "accepted": true,
+      "attempts": 1,
+      "costUsd": 0.023628060000000003,
+      "seconds": 55.789
+    },
+    {
+      "variant": "default",
+      "case": "005-max-units.md",
+      "status": "ready_for_review",
+      "accepted": true,
+      "attempts": 1,
+      "costUsd": 0.0221516,
+      "seconds": 53.956
+    },
+    {
+      "variant": "review-sonnet",
+      "case": "001-duration-edge-cases.md",
+      "status": "ready_for_review",
+      "accepted": true,
+      "attempts": 1,
+      "costUsd": 0.11570039000000001,
+      "seconds": 46.107
+    },
+    {
+      "variant": "review-sonnet",
+      "case": "005-max-units.md",
+      "status": "ready_for_review",
+      "accepted": true,
+      "attempts": 1,
+      "costUsd": 0.11196036000000001,
+      "seconds": 50.628
+    },
+    {
+      "variant": "all-haiku",
+      "case": "001-duration-edge-cases.md",
+      "status": "ready_for_review",
+      "accepted": true,
+      "attempts": 1,
+      "costUsd": 0.023099750000000002,
+      "seconds": 59.921
+    },
+    {
+      "variant": "all-haiku",
+      "case": "005-max-units.md",
+      "status": "ready_for_review",
+      "accepted": true,
+      "attempts": 1,
+      "costUsd": 0.02095118,
+      "seconds": 49.745
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+**Triage: automate, low complexity.** The change is confined to `src/surety/supervise/client.py` and `tests/test_supervisor.py`, and I found nothing that needs a design decision. I did not run the test suite, and I changed no files.
+
+What the code does today:
+
+1. **NONE loses to a candidate id.** `Supervisor.choose` calls `_parse` before `_is_none`, and `_parse` returns the first id it finds. So `NONE, not a1` returns `a1`. Fix: in `choose`, check `_is_none(text)` first and return `None` with `abstained=True` when it matches.
+2. **Ids outside `state.options` are accepted.** `allowed` is `candidate_ids` whenever it is passed, with no filter against `state.options`. Fix: intersect `allowed` with `{o.id for o in state.options}`. `NONE_OF_THESE` is already in `options` (from `page_compiler.py`), so runner behaviour is unchanged.
+3. **Hyphen lookbehind.** `_parse` and `_is_none` both use `(?<![\w-])`, which rejects `-E1`. Fix: change the lookbehind to `(?<!\w)` in `_parse`. The trailing `(?![\w-])` can stay as it is. Whether `_is_none` should change the same way is a judgment call; I would make it consistent.
+4. **Tests.** `tests/test_supervisor.py` has no parametrized parse test. Add one for `E1` vs `E12`, trailing punctuation (`E1.`), `NONE, not a1`, out-of-options ids, and `-E1`. For the HTTP error path, `_complete` calls `r.raise_for_status()`, so the test should assert that `httpx.HTTPStatusError` propagates. The issue does not say whether that path should instead be treated as unparsed. I read it as "pin current behaviour," so I'd confirm that before merging.
+
+Risks to check when implementing:
+- Putting the NONE check first changes the reasoning-fallback path. If a reasoning tail mentions "NONE" while deliberating, the answer will now abstain where it used to pick an id. That is what the issue asks for, but `test_h3.py` and `test_runner.py` should be run to see whether they depend on the old order.
+
+```json
+{"decision": "automate", "complexity": "low", "reason": "Four small, well-specified fixes to the parse logic in one module plus one test file; the current behaviour and the failing cases are reproducible by reading the code. Tests have not been run.", "plan": "In src/surety/supervise/client.py: (1) in Supervisor.choose, check _is_none(text) before _parse and return None with usage.abstained=True on match; (2) filter allowed to ids present in state.options; (3) change the _parse lookbehind from (?<![\\w-]) to (?<!\\w), and make _is_none consistent. In tests/test_supervisor.py: add a @pytest.mark.parametrize parse test covering E1 vs E12, trailing punctuation, 'NONE, not a1', out-of-options id, and '-E1'; add an HTTP error test asserting httpx.HTTPStatusError propagates (confirm this is the intended behaviour). Run test_supervisor.py, test_h3.py and test_runner.py, since the fallback path changes order."}
+```

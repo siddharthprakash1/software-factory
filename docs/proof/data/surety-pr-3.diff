@@ -1,0 +1,167 @@
+diff --git a/src/surety/calib/metrics.py b/src/surety/calib/metrics.py
+index cabb689..48764c4 100644
+--- a/src/surety/calib/metrics.py
++++ b/src/surety/calib/metrics.py
+@@ -3,15 +3,22 @@
+ 
+ def _top(probs, gold):
+     conf = np.array([max(p.values()) for p in probs])
+-    wrong = np.array([max(p, key=p.get) != g for p, g in zip(probs, gold)])
++    wrong = np.array([max(p, key=p.get) != g for p, g in zip(probs, gold)], dtype=bool)
+     return conf, wrong
+ 
+ 
++def _mean(values) -> float:
++    a = np.asarray(values, dtype=float)
++    return float(a.mean()) if a.size else float("nan")
++
++
+ def accuracy(probs, gold) -> float:
+-    return float(1.0 - _top(probs, gold)[1].mean())
++    return float(1.0 - _mean(_top(probs, gold)[1]))
+ 
+ 
+ def ece(probs, gold, n_bins: int = 15) -> float:
++    if not len(probs):
++        return float("nan")
+     conf, wrong = _top(probs, gold)
+     correct = ~wrong
+     idx = np.minimum((conf * n_bins).astype(int), n_bins - 1)
+@@ -24,28 +31,28 @@ def ece(probs, gold, n_bins: int = 15) -> float:
+ 
+ 
+ def brier(probs, gold) -> float:
+-    return float(np.mean([sum((v - (o == g)) ** 2 for o, v in p.items()) for p, g in zip(probs, gold)]))
++    return _mean([sum((v - (o == g)) ** 2 for o, v in p.items()) for p, g in zip(probs, gold)])
+ 
+ 
+ def confident_error_rate(probs, gold, threshold: float = 0.9) -> float:
+     conf, wrong = _top(probs, gold)
+-    return float(np.mean((conf >= threshold) & wrong))
++    return _mean((conf >= threshold) & wrong)
+ 
+ 
+ def coverage(sets, gold) -> float:
+-    return float(np.mean([g in s for s, g in zip(sets, gold)]))
++    return _mean([g in s for s, g in zip(sets, gold)])
+ 
+ 
+ def mean_set_size(sets) -> float:
+-    return float(np.mean([len(s) for s in sets]))
++    return _mean([len(s) for s in sets])
+ 
+ 
+ def automation_rate(sets) -> float:
+-    return float(np.mean([len(s) == 1 for s in sets]))
++    return _mean([len(s) == 1 for s in sets])
+ 
+ 
+ def autonomous_error_rate(sets, gold) -> float:
+-    return float(np.mean([len(s) == 1 and s[0] != g for s, g in zip(sets, gold)]))
++    return _mean([len(s) == 1 and s[0] != g for s, g in zip(sets, gold)])
+ 
+ 
+ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
+@@ -64,8 +71,8 @@ def risk_coverage_curve(probs, gold, thresholds) -> list[dict]:
+         act = conf >= tau
+         out.append({
+             "tau": tau,
+-            "acted": float(act.mean()),
++            "acted": _mean(act),
+             "risk": float(wrong[act].mean()) if act.any() else 0.0,
+-            "error_rate_all": float((act & wrong).mean()),
++            "error_rate_all": _mean(act & wrong),
+         })
+     return out
+diff --git a/tests/test_metrics.py b/tests/test_metrics.py
+index 6d61be8..8c26deb 100644
+--- a/tests/test_metrics.py
++++ b/tests/test_metrics.py
+@@ -1,3 +1,6 @@
++import math
++import warnings
++
+ import pytest
+ 
+ from surety.calib import metrics as m
+@@ -13,6 +16,25 @@ def test_ece_overconfident():
+     assert m.ece(probs, ["a", "b"]) == pytest.approx(0.4)
+ 
+ 
++def test_ece_p_max_of_one_lands_in_last_bin():
++    # conf == 1.0 maps to bin n_bins - 1 (clamp); if it fell outside the bins it would be dropped.
++    assert m.ece([{"a": 1.0, "b": 0.0}], ["b"]) == pytest.approx(1.0)
++    assert m.ece([{"a": 1.0, "b": 0.0}], ["a"]) == pytest.approx(0.0)
++
++
++def test_ece_sums_over_several_non_empty_bins():
++    # bin 14 (conf .95): 2 items, acc .5 -> 0.5 * |0.5 - 0.95| = 0.225
++    # bin 11 (conf .75): 1 item,  acc 1.0 -> 0.25 * |1.0 - 0.75| = 0.0625
++    # bin 8  (conf .55): 1 item,  acc 0.0 -> 0.25 * |0.0 - 0.55| = 0.1375
++    probs = [
++        {"a": 0.95, "b": 0.05},
++        {"a": 0.95, "b": 0.05},
++        {"a": 0.75, "b": 0.25},
++        {"a": 0.55, "b": 0.45},
++    ]
++    assert m.ece(probs, ["a", "b", "a", "b"]) == pytest.approx(0.425)
++
++
+ def test_accuracy():
+     probs = [{"a": 0.6, "b": 0.4}, {"a": 0.6, "b": 0.4}]
+     assert m.accuracy(probs, ["a", "b"]) == 0.5
+@@ -37,12 +59,35 @@ def test_coverage_and_set_size():
+     assert m.mean_set_size(sets) == pytest.approx(4 / 3)
+ 
+ 
+-def test_autonomous_error_counts_only_singletons():
++def test_automation_rate_counts_singleton_sets():
+     sets = [["a"], ["a", "b"], ["c"]]
+     assert m.automation_rate(sets) == pytest.approx(2 / 3)
++
++
++def test_autonomous_error_counts_only_singletons():
++    sets = [["a"], ["a", "b"], ["c"]]
+     assert m.autonomous_error_rate(sets, ["b", "b", "c"]) == pytest.approx(1 / 3)
+ 
+ 
++EMPTY_METRIC_CALLS = [
++    pytest.param(lambda: m.accuracy([], []), id="accuracy"),
++    pytest.param(lambda: m.brier([], []), id="brier"),
++    pytest.param(lambda: m.confident_error_rate([], []), id="confident_error_rate"),
++    pytest.param(lambda: m.coverage([], []), id="coverage"),
++    pytest.param(lambda: m.mean_set_size([]), id="mean_set_size"),
++    pytest.param(lambda: m.automation_rate([]), id="automation_rate"),
++    pytest.param(lambda: m.autonomous_error_rate([], []), id="autonomous_error_rate"),
++    pytest.param(lambda: m.ece([], []), id="ece"),
++]
++
++
++@pytest.mark.parametrize("call", EMPTY_METRIC_CALLS)
++def test_empty_input_returns_nan_without_runtime_warning(call):
++    with warnings.catch_warnings():
++        warnings.simplefilter("error", RuntimeWarning)
++        assert math.isnan(call())
++
++
+ def test_risk_coverage_monotone_acted():
+     probs = [{"a": 0.9, "b": 0.1}, {"a": 0.7, "b": 0.3}, {"a": 0.55, "b": 0.45}]
+     rc = m.risk_coverage_curve(probs, ["a", "b", "b"], [0.0, 0.6, 0.8, 0.95])
+@@ -54,6 +99,17 @@ def test_risk_coverage_monotone_acted():
+     assert rc[3] == {"tau": 0.95, "acted": 0.0, "risk": 0.0, "error_rate_all": 0.0}
+ 
+ 
++def test_risk_coverage_empty_input_returns_nan_without_runtime_warning():
++    with warnings.catch_warnings():
++        warnings.simplefilter("error", RuntimeWarning)
++        rc = m.risk_coverage_curve([], [], [0.0, 0.5])
++    assert [r["tau"] for r in rc] == [0.0, 0.5]
++    for r in rc:
++        assert math.isnan(r["acted"])
++        assert r["risk"] == 0.0
++        assert math.isnan(r["error_rate_all"])
++
++
+ def test_wilson_interval():
+     assert m.wilson(10, 100) == pytest.approx((0.0552, 0.1744), abs=1e-4)
+     lo, hi = m.wilson(0, 600)

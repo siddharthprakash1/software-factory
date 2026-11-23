@@ -1,0 +1,101 @@
+{
+  "id": "20261123-193238-add-a-reset-button-to-the-counter-pa",
+  "issue": {
+    "source": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\examples\\issues\\006-site-reset.md",
+    "title": "Add a Reset button to the counter page",
+    "body": "The counter page needs a \"Reset\" button next to the +1 and -1 buttons. Clicking it sets the displayed count back to 0. Put the logic in `src/counter.mjs` as a `reset()` method with a test, and wire the button up in `index.html`."
+  },
+  "repoName": "demo-site",
+  "repo": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\demo-site",
+  "github": null,
+  "worktree": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\workspaces\\20261123-193238-add-a-reset-button-to-the-counter-pa",
+  "branch": "factory/20261123-193238-add-a-reset-button-to-the-counter-pa",
+  "base": "3dbddfa5459fa0be39b8f39fa5ef72e3604b70dd",
+  "baseBranch": "main",
+  "openPr": false,
+  "status": "ready_for_review",
+  "next": "deliver",
+  "iteration": 1,
+  "budgetUsd": 3,
+  "costUsd": 0.20271272,
+  "startedAt": "2026-11-23T19:32:39.362Z",
+  "lastSeenAt": "2026-11-23T19:32:39.362Z",
+  "feedbackLog": [],
+  "events": [
+    {
+      "at": "2026-11-23T19:32:54.077Z",
+      "stage": "triage",
+      "outcome": "automate/low",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.007420200000000002,
+      "durationMs": 14710,
+      "tokensIn": 128203,
+      "tokensOut": 1568
+    },
+    {
+      "at": "2026-11-23T19:33:13.446Z",
+      "stage": "implement",
+      "outcome": "attempt 1 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.00767484,
+      "durationMs": 19051,
+      "tokensIn": 175620,
+      "tokensOut": 1911
+    },
+    {
+      "at": "2026-11-23T19:33:14.623Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 1175
+    },
+    {
+      "at": "2026-11-23T19:33:47.615Z",
+      "stage": "verify_ui",
+      "outcome": "pass",
+      "harness": "claude",
+      "model": "sonnet",
+      "costUsd": 0.1809578,
+      "durationMs": 31581,
+      "tokensIn": 331705,
+      "tokensOut": 1667
+    },
+    {
+      "at": "2026-11-23T19:34:02.784Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.00665988,
+      "durationMs": 15110,
+      "tokensIn": 130196,
+      "tokensOut": 1252
+    },
+    {
+      "at": "2026-11-23T19:34:02.833Z",
+      "stage": "deliver",
+      "outcome": "branch ready"
+    }
+  ],
+  "triage": {
+    "decision": "automate",
+    "complexity": "low",
+    "reason": "The issue specifies the method name, the target file, the reset-to-0 behavior, and the button location, and the change is confined to one method, one test, and one button in three small files. The existing node:test suite can verify it.",
+    "plan": "src/counter.mjs: add reset() { value = 0; }, setting to literal 0 rather than start. test/counter.test.mjs: add a test that increments, calls reset(), and asserts value is 0. index.html: add a <button id=\"reset\">Reset</button> between -1 and +1 whose onclick calls counter.reset() then render(), matching the existing handlers. Verify with npm test."
+  },
+  "verifyLog": "$ npm test\n\n> demo-site@1.0.0 test\n> node --test\n\nTAP version 13\n# Subtest: increments and decrements\nok 1 - increments and decrements\n  ---\n  duration_ms: 1.2127\n  ...\n# Subtest: reset sets the value back to 0\nok 2 - reset sets the value back to 0\n  ---\n  duration_ms: 0.2164\n  ...\n1..2\n# tests 2\n# suites 0\n# pass 2\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 126.3679\n\n",
+  "uiCheck": {
+    "verdict": "pass",
+    "summary": "Page shows -1, Reset and +1 buttons. After three +1 clicks the count was 3, and clicking Reset returned it to 0. The screenshot is saved in the workspace root as ui-attempt-1.png, not at the requested runs path, because the tool blocked that path.",
+    "problems": [],
+    "screenshot": null
+  },
+  "review": {
+    "verdict": "approve",
+    "summary": "reset() sets the counter to 0, the button is wired to it in index.html next to the existing controls, and a meaningful test covers it. Nothing unrelated is touched. The test suite could not be run in this session, so the verdict is based on reading the code.",
+    "comments": []
+  },
+  "note": "Branch factory/20261123-193238-add-a-reset-button-to-the-counter-pa is ready. Report: .factory/runs/20261123-193238-add-a-reset-button-to-the-counter-pa/report.md",
+  "endedAt": "2026-11-23T19:34:02.835Z"
+}

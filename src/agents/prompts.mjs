@@ -45,7 +45,9 @@ Rules:
 
 Finish with a short summary of what you changed and why.`;
 
-export const reviewPrompt = (issue, diff, { lessons } = {}) => `You are the code review agent of a software factory. You did not write this change. You are in the worktree that contains it, so read surrounding code where the diff alone is not enough. Do not change any files.
+export const reviewPrompt = (issue, diff, { lessons, verify = [] } = {}) => `You are the code review agent of a software factory. You did not write this change. You are in the worktree that contains it, so read surrounding code where the diff alone is not enough. Do not change any files.
+
+${verify.length ? `The factory already ran these checks on this exact change and they passed: ${verify.join(' ; ')}. You cannot run commands yourself and do not need to; do not mention that in your summary.` : 'No automated checks are configured for this repository, so read the tests with extra care.'}
 
 ${issueBlock(issue)}
 ${lessonsBlock(lessons)}

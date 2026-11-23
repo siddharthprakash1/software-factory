@@ -20,6 +20,10 @@ issue -> triage -> [spec -> human approval] -> implement -> verify -> [browser c
 | deliver | no agent | a report and a branch, or a pull request |
 | learn | cheap agent, after a run that received feedback | updates `memory/<repo>.md` |
 
+## Proof
+
+[`docs/proof/`](docs/proof/README.md) records the factory's first real runs: two pull requests on a private repository, a revision driven by a PR comment, eval results, screenshots, raw logs and what it cost.
+
 ## Quick start
 
 Needs Node 22+, git, the [`claude` CLI](https://claude.com/claude-code) signed in, and `gh` for anything touching GitHub. There are no dependencies to install.

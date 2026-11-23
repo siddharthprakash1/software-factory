@@ -1,0 +1,26 @@
+$ npm test
+
+> demo-site@1.0.0 test
+> node --test
+
+TAP version 13
+# Subtest: increments and decrements
+ok 1 - increments and decrements
+  ---
+  duration_ms: 1.2127
+  ...
+# Subtest: reset sets the value back to 0
+ok 2 - reset sets the value back to 0
+  ---
+  duration_ms: 0.2164
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 126.3679
+

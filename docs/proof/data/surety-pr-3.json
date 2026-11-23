@@ -1,0 +1,66 @@
+{
+  "additions": 74,
+  "author": {
+    "id": "U_kgDOBYJ1aw",
+    "is_bot": false,
+    "login": "siddharthprakash1",
+    "name": "Siddharth Prakash"
+  },
+  "baseRefName": "main",
+  "body": "Closes #2\n\nProduced by the software factory (run `20261123-193441-metrics-return-nan-without-a-runtime`). Comment on this PR to have it revised.\n\n- Attempts: 2, cost: $0.055\n- Triage: automate / low - Two files, one obvious pattern: guard the row-averaging metrics for empty input so they return NaN without a warning, and add pinned ECE tests and a split test. Non-empty outputs are unchanged, so the change is verifiable by the existing and new tests.\n- Review: The change returns NaN without a RuntimeWarning for empty input across the row-dividing metrics, leaves non-empty results unchanged, and adds ECE edge-case tests whose pinned values I verified by hand. I could not run pytest because the Bash call was denied, so the test results are unverified.\n\n## Changes\n```\nsrc/surety/calib/metrics.py | 27 +++++++++++++--------\n tests/test_metrics.py       | 58 ++++++++++++++++++++++++++++++++++++++++++++-\n 2 files changed, 74 insertions(+), 11 deletions(-)\n```\n\n## Verification\n```\n$ uv run pytest -q\n........................................................................ [ 36%]\r\n........................................................................ [ 73%]\r\n...................................................                      [100%]\r\n195 passed, 1 skipped in 22.88s\r\n\n\n```",
+  "changedFiles": 2,
+  "comments": [],
+  "commits": [
+    {
+      "authoredDate": "2026-11-23T19:36:52Z",
+      "authors": [
+        {
+          "email": "iamsid0011@gmail.com",
+          "id": "U_kgDOBYJ1aw",
+          "login": "siddharthprakash1",
+          "name": "Siddharth Prakash"
+        }
+      ],
+      "committedDate": "2026-11-23T19:36:52Z",
+      "messageBody": "…and cover ECE edge cases (attempt 1)",
+      "messageHeadline": "factory: Metrics: return NaN without a RuntimeWarning on empty input …",
+      "oid": "f42cfe7cc2edf204b3161887233ae15403bf2ee4"
+    },
+    {
+      "authoredDate": "2026-11-23T19:39:17Z",
+      "authors": [
+        {
+          "email": "iamsid0011@gmail.com",
+          "id": "U_kgDOBYJ1aw",
+          "login": "siddharthprakash1",
+          "name": "Siddharth Prakash"
+        }
+      ],
+      "committedDate": "2026-11-23T19:39:17Z",
+      "messageBody": "…and cover ECE edge cases (attempt 2)",
+      "messageHeadline": "factory: Metrics: return NaN without a RuntimeWarning on empty input …",
+      "oid": "0d0c3cf159e31b6d4475f56d9f265340620c713b"
+    }
+  ],
+  "createdAt": "2026-11-23T19:40:08Z",
+  "deletions": 11,
+  "files": [
+    {
+      "path": "src/surety/calib/metrics.py",
+      "additions": 17,
+      "deletions": 10,
+      "changeType": "MODIFIED"
+    },
+    {
+      "path": "tests/test_metrics.py",
+      "additions": 57,
+      "deletions": 1,
+      "changeType": "MODIFIED"
+    }
+  ],
+  "headRefName": "factory/20261123-193441-metrics-return-nan-without-a-runtime",
+  "number": 3,
+  "state": "OPEN",
+  "title": "Metrics: return NaN without a RuntimeWarning on empty input and cover ECE edge cases",
+  "url": "https://github.com/siddharthprakash1/surety/pull/3"
+}
