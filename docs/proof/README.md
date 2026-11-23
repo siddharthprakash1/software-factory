@@ -42,15 +42,23 @@ On PR #3 the review agent rejected the first attempt, the implement agent fixed 
 
 The factory reported back on the issue with the PR link:
 
-![Issue #2 with the factory's comment](images/surety-issue-2.jpg)
+![Issue #2 on github.com with the factory's comment and the linked PR](images/surety-issue-2.jpg)
 
-![PR #3 as opened by the factory](images/surety-pr-3.jpg)
+The PR description is written by the factory and includes the test run from its verify stage (195 passed):
+
+![PR #3 on github.com as opened by the factory](images/surety-pr-3.jpg)
 
 ## 2. A PR comment steered the factory
 
 A review comment was posted on PR #4 asking for one regex change to be reverted and a test added. The next `factory poll` picked it up, sent the run back to the implement stage, pushed commit `18fd4c9` to the same PR, and replied there.
 
-![PR #4: the human comment and the factory's revision](images/surety-pr-4.jpg)
+![PR #4 on github.com](images/surety-pr-4.jpg)
+
+The conversation, newest first: the factory's first commit, the human comment, the factory's second commit, and its reply.
+
+![PR #4 conversation: the human comment and the factory's revision](images/surety-pr-4-comments.jpg)
+
+![PR #4 commits](images/surety-pr-4-commits.png)
 
 ## 3. Memory
 
@@ -99,7 +107,7 @@ Running the factory in GitHub Actions would be different: there it uses an `ANTH
 
 ## What this does not prove
 
-- **The images of issues and PRs are renderings, not screenshots of github.com.** The repo is private and the capture browser was not signed in to GitHub, so the pages were rendered from the GitHub CLI's output, saved alongside as [`data/surety-pr-3.json`](data/surety-pr-3.json), [`data/surety-pr-4.json`](data/surety-pr-4.json) and the issue files. The banner on each image says so. The links above show the real pages.
+- **The issue and PR images are screenshots of github.com** taken in a signed-in browser on 24 November 2026. The raw GitHub CLI records for the same pages are saved alongside as [`data/surety-pr-3.json`](data/surety-pr-3.json), [`data/surety-pr-4.json`](data/surety-pr-4.json) and the issue files. A screenshot can still be edited, so the links above are the final check.
 - **The PRs are not merged.** Their diffs were read once and each run's tests passed in its worktree, but nobody with knowledge of surety has reviewed them.
 - **The review agent's summaries in the PRs say it could not run the tests.** That is true of the review agent, which is read-only. The factory's separate verify stage did run `uv run pytest -q` and it passed, as the event log shows. The review prompt has since been changed so it no longer says this.
 - **Not exercised:** the GitHub Actions workflow, the monitor's GitHub path, replies to parked issues or specs, and non-Claude harnesses.
@@ -108,7 +116,7 @@ Running the factory in GitHub Actions would be different: there it uses an `ANTH
 ## Files and checksums
 
 ```
-images/   5 images referenced above
+images/   7 images referenced above
 data/     raw GitHub records and diffs for the PRs and issues, run records, event logs,
           metrics, eval results, the monitor's proposed issue
 MD5SUMS   MD5 checksum of every file in images/ and data/
