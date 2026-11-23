@@ -112,6 +112,10 @@ For repos with a UI, an agent opens the running app in a browser and tries the c
 
 <img src="docs/proof/images/browser-check-counter-reset.png" alt="Demo counter page showing 0 after the agent clicked Reset" width="70%">
 
+### It reviews itself
+
+`factory retro` reads the factory's own run logs, counts what sent work back (failed checks, review, people), and proposes changes to its prompts and settings, with the evidence for each.
+
 ### It watches for breakage
 
 `factory monitor` runs your health checks and reads failed CI runs. When something fails, an agent finds the cause and files an issue for it.
@@ -171,6 +175,7 @@ The factory comments on the issue at every stop: the PR link, the spec to approv
 | `monitor [--repo <name>] [--auto]` | Check repo health and propose issues. `--auto` lets the factory pick them up itself. |
 | `eval <suite.json> [--variant a,b]` | Run a suite against named variants from the config and compare them. |
 | `replay <run-id> [--variant name]` | Redo a past run's issue from the same commit under a variant. Posts nothing to GitHub. |
+| `retro [--last <n>]` | Count what sent work back across recent runs, and have an agent propose changes to the factory itself. |
 | `status [run-id]` | List runs, or show one run's step-by-step log. |
 | `metrics` | Delivery rate, cost per delivered change, cost by stage and repo. |
 | `dashboard [--serve <port>]` | Write the dashboard, and optionally serve it live. |
@@ -197,6 +202,7 @@ src/
   notify.mjs            reports run outcomes on the issue and PR
   memory.mjs            reads and updates lessons
   monitor.mjs           health signals -> proposed issues
+  retro.mjs             friction in the factory's own runs -> proposed changes
   evals.mjs             suites, variants, acceptance checks
   ui-verify.mjs         starts and stops the app for the browser check
   dashboard.mjs         HTML dashboard
@@ -221,7 +227,7 @@ test/                   offline test suite with a scripted agent and a fake GitH
 
 ## Tested without spending anything
 
-`npm test` runs the real CLI against a scripted agent and a fake GitHub: 31 tests covering the pipeline, the guards, comment steering, parked issues, spec approval, the monitor and replay. They need no network and no model calls, and run on Linux and Windows in CI.
+`npm test` runs the real CLI against a scripted agent and a fake GitHub: 32 tests covering the pipeline, the guards, comment steering, parked issues, spec approval, the monitor and replay. They need no network and no model calls, and run on Linux and Windows in CI.
 
 ## Where this is going
 

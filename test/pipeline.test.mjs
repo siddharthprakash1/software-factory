@@ -147,3 +147,19 @@ test('two runs started in the same second get different ids', (t) => {
   assert.equal(new Set(w.runs().map((r) => r.id)).size, 4);
   assert.ok(w.runs().every((r) => r.status === 'ready_for_review'));
 });
+
+test('retro counts what sent work back and asks for proposals', (t) => {
+  const w = world({
+    ...happy,
+    implement: [reply.write('broken\n'), reply.write('fixed\n')],
+    learn: [{ text: 'NO_CHANGE' }],
+    retro: [{ text: '1. Tell implement to run the check first.' }],
+  });
+  t.after(w.cleanup);
+  w.factory('run', w.issueFile);
+  const { out } = w.factory('retro');
+  assert.match(out, /1 needed retries/);
+  assert.match(out, /- checks: 1/);
+  assert.match(out, /Tell implement to run the check first/);
+  assert.match(w.calls('retro')[0].prompt, /app\.txt is not fixed/);
+});

@@ -7,6 +7,7 @@ import { poll } from './poll.mjs';
 import { monitor } from './monitor.mjs';
 import { runEval, replay } from './evals.mjs';
 import { dashboard } from './dashboard.mjs';
+import { retro } from './retro.mjs';
 
 const USAGE = `Software factory
 
@@ -18,7 +19,8 @@ const USAGE = `Software factory
                                      check repo health and propose issues
   eval <suite.json> [--variant a,b]  run a suite against config variants
   replay <run-id> [--variant name]   redo a past run's issue from the same commit under a variant
-  status [run-id]                 list runs, or show one run's event log
+  status [run-id]                    list runs, or show one run's event log
+  retro [--last <n>]                 where the factory itself loses time, and what to change
   metrics                            totals across runs
   dashboard [--serve <port>]         write .factory/dashboard.html, optionally serve it live
 
@@ -79,6 +81,8 @@ try {
     printEvents(run);
   } else if (cmd === 'status') {
     listRuns().filter((r) => !r.eval).forEach(printSummary);
+  } else if (cmd === 'retro') {
+    await retro(config, { last: flags.last ? Number(flags.last) : 30 });
   } else if (cmd === 'metrics') {
     printMetrics();
   } else if (cmd === 'dashboard') {

@@ -116,3 +116,20 @@ End your answer with exactly one fenced json block (an empty list is a valid ans
 \`\`\`json
 {"issues": [{"title": "short imperative title", "body": "markdown body"}]}
 \`\`\``;
+
+export const retroPrompt = (stats, samples, stageSummary) => `You run the retrospective for a software factory: a pipeline of AI agents (triage, spec, implement, verify, review) that turns issues into pull requests. Below are numbers from its recent runs and samples of the feedback that sent work back to the implement stage.
+
+<numbers>
+${stats}
+</numbers>
+
+<feedback_samples>
+${samples.join('\n\n') || '(none)'}
+</feedback_samples>
+
+<current_stage_models>
+${stageSummary}
+</current_stage_models>
+
+Propose at most three changes to the factory itself that the evidence supports: a prompt instruction to add, a model to change for a stage, a limit to change, or a check to add before review. For each, give the change in one sentence, the evidence for it from the numbers or samples, and how to tell whether it worked. If the evidence is too thin to support a change, say so instead of guessing. Reply in markdown, with no preamble.`;
+

@@ -15,6 +15,7 @@ const STAGES = [
   ['verification agent', 'verify_ui'],
   ['lessons file', 'learn'],
   ['monitor agent', 'monitor'],
+  ['retrospective for a software factory', 'retro'],
 ];
 
 const prompt = fs.readFileSync(0, 'utf8');

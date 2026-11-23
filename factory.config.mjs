@@ -72,6 +72,7 @@ export default {
     verify_ui: { harness: 'claude', model: 'sonnet', tools: BROWSER },
     learn: { harness: 'claude', model: 'haiku', tools: [] },
     monitor: { harness: 'claude', model: 'sonnet', tools: READ },
+    retro: { harness: 'claude', model: 'sonnet', tools: [] },
   },
 
   // Named overrides for `factory eval <suite> --variant a,b`. Each is merged over this config.

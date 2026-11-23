@@ -23,7 +23,7 @@ How to read this: the sources were read by a research agent and summarised; the 
 | 6 | **Memory with a lifecycle**: candidate rules get promoted on repeated signal and retired on negative signal | [Cursor Bugbot](https://cursor.com/blog/bugbot-learning) | **Not built.** The learn stage rewrites a capped list each time, which is a weak form of curation. |
 | 7 | **Lessons become linters**, and the agent's instruction file stays a short map | [OpenAI harness engineering](https://openai.com/index/harness-engineering/) | Not built. |
 | 8 | **Scheduled cleanup agents** that open small refactor PRs | OpenAI, same post | Not built. The monitor only reacts to failures. |
-| 9 | **Mining the factory's own runs for friction** and filing tickets against the factory | [Factory "Signals"](https://factory.com/news/factory-signals) | Not built. The run logs needed for it exist. |
+| 9 | **Mining the factory's own runs for friction** and filing tickets against the factory | [Factory "Signals"](https://factory.com/news/factory-signals) | **Built, in a small form.** `factory retro` counts what sent work back and has an agent propose changes with evidence. It does not file tickets or cluster across many sessions. |
 | 10 | **Replaying real past work** from its exact starting state to compare configurations | [Warp, "the factory stack"](https://www.warp.dev/blog/the-factory-stack) | **Built.** `factory replay <run-id> --variant <name>`. |
 | 11 | **A real sandbox**: filesystem and network isolation, credentials held outside | [Anthropic](https://www.anthropic.com/engineering/claude-code-sandboxing) | **Not built, and the biggest remaining gap.** A git worktree is not isolation. Docker is not installed on this machine. |
 | 12 | **A calibrated, separate evaluator** with examples and thresholds, because agents praise their own work | [Anthropic](https://www.anthropic.com/engineering/harness-design-long-running-apps) | Partly: review is a separate agent, but uncalibrated. |
@@ -59,7 +59,6 @@ One more finding that applies directly: `claude -p` runs a target repository's o
 
 1. **A sandbox for agent runs.** Run each agent in a container with no network except the model API, and keep the GitHub token outside it. This matters most before the factory handles issues written by strangers.
 2. **Memory lifecycle.** Store lessons with a status and hit count; promote on repetition, retire when a person rejects work that followed one; have a curator propose changes as a pull request to `memory/`.
-3. **Friction mining** (`factory retro`). Read the run logs, find where runs loop or stall, and file issues against the factory itself.
-4. **Proof bundle.** Attach browser-check screenshots and the review verdict to the PR as a comment.
-5. **Hidden acceptance checks on real runs.** Let a repository keep scenario tests outside the worktree that run only after review.
-6. **Triage that reproduces.** Give triage a read-only way to run the failing case before it routes.
+3. **Proof bundle.** Attach browser-check screenshots and the review verdict to the PR as a comment.
+4. **Hidden acceptance checks on real runs.** Let a repository keep scenario tests outside the worktree that run only after review.
+5. **Triage that reproduces.** Give triage a read-only way to run the failing case before it routes.

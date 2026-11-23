@@ -57,6 +57,7 @@ export function world(scenario, { config = {} } = {}) {
       verify_ui: stage(),
       learn: stage(),
       monitor: stage(),
+      retro: stage(),
     },
     variants: { default: {} },
     ...config,
