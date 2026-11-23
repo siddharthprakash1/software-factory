@@ -1,0 +1,61 @@
+# Software factory trigger. Copy to .github/workflows/factory.yml in a target repository.
+#
+# Labelling an issue `factory` runs it through the pipeline on a GitHub runner and opens a PR.
+#
+# Required repository secrets:
+#   ANTHROPIC_API_KEY    used by the claude CLI
+#   FACTORY_REPO_TOKEN   a token that can read the software-factory repository (it is private)
+#
+# The target repository must have an entry in the factory's factory.config.mjs with a matching
+# `github:` value. Add any toolchain setup your `verify` commands need where marked below.
+#
+# Limits: each job starts with no run history, so replies on the issue or PR are not picked up
+# here. For comment steering run `factory poll --watch 60` on a machine that keeps .factory/.
+# The browser check (`ui`) needs the Playwright MCP server and is not set up in this job.
+name: Software factory
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  run:
+    if: github.event.label.name == 'factory'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: target
+          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: siddharthprakash1/software-factory
+          token: ${{ secrets.FACTORY_REPO_TOKEN }}
+          path: factory
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g @anthropic-ai/claude-code
+
+      # --- toolchain for this repository's verify commands, for example: ---
+      # - uses: astral-sh/setup-uv@v5
+
+      - name: Run the factory on this issue
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          node factory/src/cli.mjs run
+          "gh:${{ github.repository }}#${{ github.event.issue.number }}"
+          --path "$GITHUB_WORKSPACE/target" --pr
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-run
+          path: factory/.factory/runs
+          include-hidden-files: true

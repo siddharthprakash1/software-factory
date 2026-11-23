@@ -1,14 +1,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { getIssue } from './github.mjs';
+import { repoByGithub } from './config.mjs';
 
-// An issue is either a markdown file (first line is the title) or `gh:owner/repo#123`.
-export function loadIssue(ref) {
-  const gh = ref.match(/^gh:([^#]+)#(\d+)$/);
-  if (gh) {
-    const out = execFileSync('gh', ['issue', 'view', gh[2], '--repo', gh[1], '--json', 'title,body,url'], { encoding: 'utf8' });
-    const { title, body, url } = JSON.parse(out);
-    return { source: ref, url, title, body: body ?? '' };
+// An issue is a markdown file (first line is the title), `gh:owner/repo#123`, or `<repo-name>#123`.
+export function loadIssue(config, ref) {
+  const m = ref.match(/^(?:gh:)?([^#\s]+)#(\d+)$/);
+  if (m) {
+    const slug = config.repos?.[m[1]]?.github ?? m[1];
+    const repoName = repoByGithub(config, slug);
+    if (!repoName) throw new Error(`no entry in config.repos has github: "${slug}"`);
+    return { ...getIssue(slug, m[2]), source: `gh:${slug}#${m[2]}`, repoName };
   }
   const text = fs.readFileSync(ref, 'utf8');
   const [first, ...rest] = text.trim().split(/\r?\n/);

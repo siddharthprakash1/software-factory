@@ -1,0 +1,14 @@
+{
+  "name": "demo",
+  "repo": "demo",
+  "cases": [
+    {
+      "issue": "../issues/001-duration-edge-cases.md",
+      "accept": { "files": { "test/accept.test.mjs": "demo/accept-001.test.mjs" }, "cmd": "node --test test/accept.test.mjs" }
+    },
+    {
+      "issue": "../issues/005-max-units.md",
+      "accept": { "files": { "test/accept.test.mjs": "demo/accept-005.test.mjs" }, "cmd": "node --test test/accept.test.mjs" }
+    }
+  ]
+}

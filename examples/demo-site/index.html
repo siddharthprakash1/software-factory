@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Counter</title>
+    <style>
+      body { font: 18px system-ui, sans-serif; display: grid; place-items: center; min-height: 100vh; margin: 0; }
+      main { text-align: center; }
+      #count { font-size: 64px; margin: 16px 0; }
+      button { font-size: 18px; padding: 8px 18px; margin: 0 4px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Counter</h1>
+      <div id="count">0</div>
+      <button id="decrement">-1</button>
+      <button id="increment">+1</button>
+    </main>
+    <script type="module">
+      import { createCounter } from './src/counter.mjs';
+      const counter = createCounter();
+      const out = document.getElementById('count');
+      const render = () => (out.textContent = counter.value);
+      document.getElementById('increment').onclick = () => (counter.increment(), render());
+      document.getElementById('decrement').onclick = () => (counter.decrement(), render());
+    </script>
+  </body>
+</html>
