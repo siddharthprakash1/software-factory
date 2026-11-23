@@ -12,6 +12,7 @@ export default {
   //   verify  commands that must pass after every implementation attempt
   //   ui      optional browser check: a start command and the URL it serves
   //   signals commands the monitor runs; a failing one becomes a proposed issue
+  //   protected path prefixes agents may not change (.github/ is always protected)
   repos: {
     demo: {
       path: './.factory/demo-repo',
@@ -34,6 +35,13 @@ export default {
 
   // GitHub issues carrying this label are picked up by `factory poll`.
   label: 'factory',
+
+  // Whose comments may steer a run (GitHub author associations). Everyone else is ignored,
+  // because a comment becomes instructions to an agent that can run commands.
+  trustedAuthors: ['OWNER', 'MEMBER', 'COLLABORATOR'],
+
+  // How many new issues `poll` works on at the same time.
+  concurrency: 2,
 
   // Hard limits per run.
   maxIterations: 3, // implement -> verify -> review attempts before asking a human

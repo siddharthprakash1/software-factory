@@ -32,11 +32,13 @@ export function readRunFile(run, name) {
   return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
 }
 
+export const tag = (run) => (run.issue?.number ? `#${run.issue.number} ` : '');
+
 // Appends to the run's event log, saves, and prints one progress line.
 export function record(run, stage, outcome, extra = {}) {
   run.events.push({ at: new Date().toISOString(), stage, outcome, ...extra });
   saveRun(run);
   const cost = extra.costUsd != null ? ` $${extra.costUsd.toFixed(3)}` : '';
   const secs = extra.durationMs != null ? ` ${Math.round(extra.durationMs / 1000)}s` : '';
-  console.log(`[${stage}${extra.model ? ':' + extra.model : ''}] ${outcome}${cost}${secs}`);
+  console.log(`${tag(run)}[${stage}${extra.model ? ':' + extra.model : ''}] ${outcome}${cost}${secs}`);
 }

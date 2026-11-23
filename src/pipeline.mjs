@@ -3,8 +3,8 @@ import path from 'node:path';
 import { runDir } from './paths.mjs';
 import { resolveRepo, resolveModel } from './config.mjs';
 import { loadIssue } from './issues.mjs';
-import { saveRun, loadRun, record, writeRunFile, readRunFile } from './runs.mjs';
-import { git, tail, createWorkspace, commitAll, runChecks } from './workspace.mjs';
+import { saveRun, loadRun, record, tag, writeRunFile, readRunFile } from './runs.mjs';
+import { git, tail, createWorkspace, commitAll, runChecks, changedFiles } from './workspace.mjs';
 import { deliver } from './deliver.mjs';
 import { withServer } from './ui-verify.mjs';
 import { readLessons, learn } from './memory.mjs';
@@ -17,20 +17,22 @@ class Pause extends Error {}
 
 const repoOf = (config, run) => resolveRepo(config, run.repoName ?? run.repo);
 
-export function startRun(config, issueRef, { repo, path: checkout, pr, tags } = {}) {
-  const issue = loadIssue(config, issueRef);
+export function startRun(config, issueRef, { repo, path: checkout, pr, tags, issue: given, base } = {}) {
+  const issue = given ?? loadIssue(config, issueRef);
   const target = resolveRepo(config, repo ?? issue.repoName);
   if (checkout) target.path = path.resolve(checkout); // e.g. the CI checkout instead of the configured one
   const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15).replace('T', '-');
   const slug = issue.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 36);
-  const id = `${stamp}-${slug}`;
+  // Two runs can start in the same second with the same title (a replay, a duplicate issue).
+  let id = `${stamp}-${slug}`;
+  for (let n = 2; fs.existsSync(runDir(id)); n++) id = `${stamp}-${slug}-${n}`;
   const run = {
     id,
     issue,
     repoName: target.name,
     repo: target.path,
     github: target.github ?? null,
-    ...createWorkspace(target.path, id),
+    ...createWorkspace(target.path, id, base),
     openPr: !!pr && !!target.github,
     status: 'running',
     next: 'triage',
@@ -47,6 +49,20 @@ export function startRun(config, issueRef, { repo, path: checkout, pr, tags } = 
   return run;
 }
 
+// Deterministic limits on what an agent may change, checked on the whole branch after each attempt.
+// Agents fix a failing check the easy way when they can: by editing CI or deleting the test.
+const PROTECTED = ['.github/'];
+function guard(repo, run) {
+  const prefixes = [...PROTECTED, ...(repo.protected ?? [])];
+  const out = [];
+  for (const f of changedFiles(run.worktree, run.base)) {
+    const hit = prefixes.find((p) => f.path === p || f.path.startsWith(p));
+    if (hit) out.push(`${f.path} is under the protected path ${hit}`);
+    else if (f.status === 'D' && /(^|[/_.-])tests?([/_.-]|$)|\.spec\./i.test(f.path)) out.push(`${f.path} is a test file and was deleted`);
+  }
+  return out;
+}
+
 function setFeedback(run, source, text) {
   run.feedback = text;
   (run.feedbackLog ??= []).push({ source, text: tail(text, 1500) });
@@ -57,7 +73,7 @@ async function agent(config, run, stage, prompt) {
   if (run.costUsd >= run.budgetUsd) throw new Pause(`budget of $${run.budgetUsd} reached before ${stage}`);
   const def = config.stages[stage];
   const model = resolveModel(def, run.triage?.complexity);
-  console.log(`[${stage}:${model}] running...`);
+  console.log(`${tag(run)}[${stage}:${model}] running...`);
   const r = await runAgent(config, def, { model, prompt, cwd: run.worktree });
   run.costUsd += r.costUsd;
   const n = String(run.events.length + 1).padStart(2, '0');
@@ -118,6 +134,12 @@ const STAGES = {
       setFeedback(run, 'factory', 'You finished without changing any files. Make the change the issue asks for.');
       return 'implement';
     }
+    const violations = guard(repoOf(config, run), run);
+    if (violations.length) {
+      record(run, 'guard', `blocked: ${violations.length} protected change(s)`);
+      setFeedback(run, 'guard', `The factory does not allow these changes. Undo them and solve the issue another way:\n- ${violations.join('\n- ')}`);
+      return 'implement';
+    }
     return 'verify';
   },
 
@@ -169,7 +191,12 @@ const STAGES = {
     }
     run.review = r;
     record(run, 'review', r.verdict, meta);
-    if (r.verdict === 'approve') return 'deliver';
+    const extra = (r.out_of_scope ?? []).filter(Boolean);
+    if (r.verdict === 'approve' && !extra.length) return 'deliver';
+    if (r.verdict === 'approve') {
+      setFeedback(run, 'code review', `The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- ${extra.join('\n- ')}`);
+      return 'implement';
+    }
     setFeedback(run, 'code review', `Code review requested changes: ${r.summary}\n- ${(r.comments ?? []).join('\n- ')}`);
     return 'implement';
   },

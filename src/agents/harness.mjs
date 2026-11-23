@@ -34,7 +34,9 @@ async function runClaude({ model, tools, write, prompt, cwd, timeoutMs }) {
   const args = ['-p', '--output-format', 'json', '--model', model];
   if (tools?.length) args.push('--allowedTools', tools.join(','));
   if (write) args.push('--permission-mode', 'acceptEdits');
-  const r = await exec('claude', args, { cwd, input: prompt, timeoutMs });
+  // FACTORY_CLAUDE points at a node script that stands in for the CLI (used by the tests).
+  const fake = process.env.FACTORY_CLAUDE;
+  const r = await exec(fake ? process.execPath : 'claude', fake ? [fake, ...args] : args, { cwd, input: prompt, timeoutMs });
   if (r.timedOut) return { ok: false, text: '', error: 'agent timed out', costUsd: 0 };
   let out;
   try {

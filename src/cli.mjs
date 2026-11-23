@@ -5,7 +5,7 @@ import { listRuns, loadRun } from './runs.mjs';
 import { printMetrics, usd } from './metrics.mjs';
 import { poll } from './poll.mjs';
 import { monitor } from './monitor.mjs';
-import { runEval } from './evals.mjs';
+import { runEval, replay } from './evals.mjs';
 import { dashboard } from './dashboard.mjs';
 
 const USAGE = `Software factory
@@ -17,7 +17,8 @@ const USAGE = `Software factory
   monitor [--repo <name>] [--auto] [--signal "cmd"]
                                      check repo health and propose issues
   eval <suite.json> [--variant a,b]  run a suite against config variants
-  status [run-id]                    list runs, or show one run's event log
+  replay <run-id> [--variant name]   redo a past run's issue from the same commit under a variant
+  status [run-id]                 list runs, or show one run's event log
   metrics                            totals across runs
   dashboard [--serve <port>]         write .factory/dashboard.html, optionally serve it live
 
@@ -70,6 +71,8 @@ try {
     await monitor(config, flags.repo, { auto: flags.auto, signal: flags.signal });
   } else if (cmd === 'eval' && args[0]) {
     await runEval(args[0], (flags.variant ?? 'default').split(','));
+  } else if (cmd === 'replay' && args[0]) {
+    await replay(args[0], flags.variant ?? 'default');
   } else if (cmd === 'status' && args[0]) {
     const run = loadRun(args[0]);
     printSummary(run);

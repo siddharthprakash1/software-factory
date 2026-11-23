@@ -18,11 +18,11 @@ export const tail = (s, n) => (s.length > n ? '...' + s.slice(-n) : s);
 
 // Each run gets its own worktree and branch. With a remote, it starts from the freshly
 // fetched upstream of the checked-out branch; otherwise from local HEAD.
-export function createWorkspace(repo, id) {
+export function createWorkspace(repo, id, fixedBase) {
   git(repo, 'rev-parse', '--git-dir'); // throws if not a git repo
   const baseBranch = git(repo, 'rev-parse', '--abbrev-ref', 'HEAD');
   const hasRemote = tryGit(repo, 'remote', 'get-url', 'origin') && tryGit(repo, 'fetch', '-q', 'origin') !== null;
-  const base = (hasRemote && tryGit(repo, 'rev-parse', `origin/${baseBranch}`)) || git(repo, 'rev-parse', 'HEAD');
+  const base = fixedBase ?? ((hasRemote && tryGit(repo, 'rev-parse', `origin/${baseBranch}`)) || git(repo, 'rev-parse', 'HEAD'));
   const worktree = path.join(WORKSPACES, id);
   const branch = `factory/${id}`;
   fs.mkdirSync(WORKSPACES, { recursive: true });
@@ -41,6 +41,16 @@ export function commitAll(worktree, message) {
   git(worktree, ...ident, 'commit', '-m', message);
   return true;
 }
+
+// Files changed since `base`, as [{ status: 'A'|'M'|'D'|..., path }].
+export const changedFiles = (worktree, base) =>
+  git(worktree, 'diff', '--name-status', `${base}..HEAD`)
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [status, ...rest] = line.split('\t');
+      return { status: status[0], path: rest.at(-1) };
+    });
 
 // Runs check commands in order and stops at the first failure.
 export function runChecks(cwd, commands) {

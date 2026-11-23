@@ -1,6 +1,6 @@
 {
   "name": "software-factory",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A small software factory: label a GitHub issue, get back a tested, reviewed pull request.",
   "private": true,
   "type": "module",
@@ -14,7 +14,8 @@
     "poll": "node src/cli.mjs poll",
     "status": "node src/cli.mjs status",
     "metrics": "node src/cli.mjs metrics",
-    "dashboard": "node src/cli.mjs dashboard --serve 4700"
+    "dashboard": "node src/cli.mjs dashboard --serve 4700",
+    "test": "node --test \"test/*.test.mjs\""
   },
   "engines": {
     "node": ">=22"

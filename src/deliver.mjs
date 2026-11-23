@@ -18,6 +18,14 @@ function report(run) {
     '```',
     tail(run.verifyLog ?? '(no checks configured)', 3000),
     '```',
+    '',
+    '<details><summary>Run log: every step the factory took</summary>',
+    '',
+    '| Step | Model | Outcome | Cost | Seconds |',
+    '|---|---|---|---|---|',
+    ...run.events.map((e) => `| ${e.stage} | ${e.model ?? ''} | ${e.outcome} | ${e.costUsd != null ? '$' + e.costUsd.toFixed(3) : ''} | ${e.durationMs != null ? Math.round(e.durationMs / 1000) : ''} |`),
+    '',
+    '</details>',
   ].join('\n');
 }
 

@@ -4,7 +4,30 @@ import { EVALS } from './paths.mjs';
 import { loadConfig } from './config.mjs';
 import { startRun, execute } from './pipeline.mjs';
 import { runChecks } from './workspace.mjs';
-import { saveRun } from './runs.mjs';
+import { saveRun, loadRun } from './runs.mjs';
+
+// Re-runs the issue of an earlier run from the same starting commit under another config variant,
+// so a change to the factory can be judged on real past work. Nothing is posted to GitHub.
+export async function replay(id, variant) {
+  const old = loadRun(id);
+  const config = { ...(await loadConfig(variant)), memory: false };
+  const run = startRun(config, null, {
+    repo: old.repoName ?? old.repo,
+    issue: old.issue,
+    base: old.base,
+    tags: { eval: { suite: 'replay', variant, of: id } },
+  });
+  await execute(config, run, { quiet: true });
+  const row = (r) => ({
+    status: r.status,
+    attempts: r.iteration,
+    cost: `$${r.costUsd.toFixed(3)}`,
+    seconds: Math.round((new Date(r.endedAt) - new Date(r.startedAt)) / 1000),
+  });
+  console.log(`\nReplay of ${id}`);
+  console.table({ original: row(old), [`replay (${variant})`]: row(run) });
+  console.log(`Compare the code: git -C "${run.repo}" diff ${old.branch} ${run.branch}`);
+}
 
 // A suite is a JSON file:
 //   { "name": "...", "repo": "<name in config.repos>",

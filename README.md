@@ -10,6 +10,7 @@ logs what every step cost, takes direction from your comments, and learns from i
 ![Node 22+](https://img.shields.io/badge/node-22%2B-3fb950)
 ![Dependencies: none](https://img.shields.io/badge/dependencies-none-388bfd)
 ![Agents: Claude Code](https://img.shields.io/badge/agents-Claude%20Code-a371f7)
+[![Tests](https://github.com/siddharthprakash1/software-factory/actions/workflows/test.yml/badge.svg)](https://github.com/siddharthprakash1/software-factory/actions/workflows/test.yml)
 [![Proof: real PRs](https://img.shields.io/badge/proof-real%20pull%20requests-d29922)](docs/proof/README.md)
 
 <img src="docs/images/pipeline.svg" alt="Pipeline: issue, triage, optional spec, implement, verify, optional browser check, review, pull request, with a feedback loop back to implement and a memory of lessons" width="100%">
@@ -59,9 +60,10 @@ Everything behind these numbers is in **[docs/proof](docs/proof/README.md)**: fu
 | **Triage** | read-only agent, cheap model | `automate`, `needs_spec` or `park`, plus a complexity rating |
 | **Spec** | read-only agent, only when needed | writes a spec, then waits for a person to approve it |
 | **Implement** | agent with edit and shell tools, in its own git worktree | model chosen by complexity; the factory commits |
+| **Guard** | plain code, no agent | blocks changes to CI config, protected paths and deleted tests |
 | **Verify** | your repo's test commands, no agent | failure output goes back to implement |
 | **Browser check** | optional; starts the app and an agent uses it in a real browser | pass, or problems that go back to implement |
-| **Review** | read-only agent that did not write the code | `approve`, or comments that go back to implement |
+| **Review** | read-only agent that did not write the code | `approve`, or comments that go back to implement; also flags anything the issue did not ask for |
 | **Deliver** | no agent | a pull request that closes the issue |
 | **Learn** | cheap agent, after a run that received feedback | updates `memory/<repo>.md` |
 
@@ -91,6 +93,7 @@ learn      haiku   lessons updated       $0.005   10s
 - A reply to a **posted spec** approves or amends it.
 - A comment or review on a **factory PR** sends it back to implement and updates the same PR.
 - A run stops and asks for help after 3 failed attempts or when it hits its budget.
+- Only people with write access to the repository can steer. Comments from anyone else are ignored, and hidden text is stripped from issues and comments before an agent sees them.
 
 ### It remembers
 
@@ -98,7 +101,7 @@ Failed checks, review rejections and human comments are distilled into short rul
 
 ### It can be measured
 
-`factory eval` runs a suite of issues against several configurations, each with a hidden acceptance test the agents never see. Change a model or a prompt, and compare delivery rate and cost before you trust it.
+`factory eval` runs a suite of issues against several configurations, each with a hidden acceptance test the agents never see. `factory replay` redoes a real past run from the same commit under a different configuration. Change a model or a prompt, and compare before you trust it.
 
 </td>
 <td width="50%" valign="top">
@@ -163,10 +166,11 @@ The factory comments on the issue at every stop: the PR link, the spec to approv
 | Command | What it does |
 |---|---|
 | `run <issue> [--repo <name>] [--pr]` | Take one issue through the pipeline. The issue is a markdown file, `<repo>#123`, or `gh:owner/repo#123`. |
-| `poll [--watch <seconds>]` | Pick up labelled GitHub issues, new human comments, and merged or closed PRs. |
+| `poll [--watch <seconds>]` | Pick up labelled GitHub issues (several at once), new human comments, and merged or closed PRs. |
 | `resume <run-id> [--feedback "..."]` | The local way to comment: answer, approve, unblock or revise a run. |
 | `monitor [--repo <name>] [--auto]` | Check repo health and propose issues. `--auto` lets the factory pick them up itself. |
 | `eval <suite.json> [--variant a,b]` | Run a suite against named variants from the config and compare them. |
+| `replay <run-id> [--variant name]` | Redo a past run's issue from the same commit under a variant. Posts nothing to GitHub. |
 | `status [run-id]` | List runs, or show one run's step-by-step log. |
 | `metrics` | Delivery rate, cost per delivered change, cost by stage and repo. |
 | `dashboard [--serve <port>]` | Write the dashboard, and optionally serve it live. |
@@ -201,6 +205,8 @@ scripts/setup-demo.mjs  creates the demo repositories
 templates/              GitHub Actions workflow for target repositories
 examples/               demo-repo, demo-site, sample issues, an eval suite
 docs/proof/             evidence from the first real runs
+docs/RESEARCH.md        what other factories do, and the roadmap
+test/                   offline test suite with a scripted agent and a fake GitHub
 .factory/               generated, not committed: runs, worktrees, clones, eval results
 ```
 
@@ -213,12 +219,21 @@ docs/proof/             evidence from the first real runs
 
 </details>
 
+## Tested without spending anything
+
+`npm test` runs the real CLI against a scripted agent and a fake GitHub: 31 tests covering the pipeline, the guards, comment steering, parked issues, spec approval, the monitor and replay. They need no network and no model calls, and run on Linux and Windows in CI.
+
+## Where this is going
+
+[docs/RESEARCH.md](docs/RESEARCH.md) compares this factory with what Stripe, Spotify, Warp, OpenAI, Anthropic and others describe doing, and lists what to build next.
+
 ## Honest limits
 
 - Agents run on the machine that runs the factory, isolated only by a git worktree. There is no sandbox, so point it only at repositories and issues you trust.
 - The two surety PRs are open, not merged. Tests pass, but no maintainer has reviewed them yet.
 - The browser check needs the Playwright MCP server available to the `claude` CLI, and has only been tried on a demo page.
-- Not yet exercised: the GitHub Actions workflow, the monitor's GitHub path, replies to parked issues and specs, and non-Claude harnesses.
+- Exercised only against the fake GitHub in the test suite, not the real one: replies to parked issues and specs, and the monitor filing issues.
+- Not yet exercised at all: the GitHub Actions workflow for target repositories, and non-Claude harnesses.
 
 ## Background
 
