@@ -31,26 +31,26 @@ The factory was pointed at [`surety`](https://github.com/siddharthprakash1/suret
 
 **The issue, with the factory's reply**
 
-<img src="docs/proof/images/surety-issue-2.jpg" alt="GitHub issue 2 on surety, labelled factory, with the factory's comment linking the pull request">
+<a href="https://github.com/siddharthprakash1/surety/issues/2"><img src="docs/images/issue.jpg" alt="GitHub issue 2 on surety, labelled factory, with the factory's comment linking the pull request"></a>
 
 </td>
 <td width="50%" valign="top">
 
 **The pull request it opened**
 
-<img src="docs/proof/images/surety-pr-3.jpg" alt="Pull request 3 on surety, opened by the factory, with triage and review notes and a passing test run">
+<a href="https://github.com/siddharthprakash1/surety/pull/3"><img src="docs/images/pull-request.jpg" alt="Pull request 3 on surety, opened by the factory, with triage and review notes and a passing test run"></a>
 
 </td>
 </tr>
 </table>
 
-**Steering by comment.** A person asked for a change on the PR. The factory picked the comment up, pushed a second commit to the same PR, and replied:
+**Steering by comment.** A person asked for a change on the PR (bottom). The factory picked the comment up, pushed a second commit to the same PR, and replied (top):
 
 <div align="center">
-<img src="docs/proof/images/surety-pr-4-comments.jpg" alt="Pull request 4 conversation: a human review comment, followed by the factory's new commit and its reply" width="80%">
+<a href="https://github.com/siddharthprakash1/surety/pull/4"><img src="docs/images/steering.jpg" alt="Pull request 4 conversation: a human review comment, followed by the factory's new commit and its reply" width="75%"></a>
 </div>
 
-Everything behind these numbers is in **[docs/proof](docs/proof/README.md)**: screenshots, raw logs, eval results, costs, and a plain list of what has not been proven.
+Everything behind these numbers is in **[docs/proof](docs/proof/README.md)**: full-page screenshots, raw logs, eval results, costs, and a plain list of what has not been proven.
 
 ## How it works
 
@@ -122,7 +122,7 @@ For repos with a UI, an agent opens the running app in a browser and tries the c
 What is waiting on a person, every run, cost by stage and by repository, and the lessons learned.
 
 <div align="center">
-<img src="docs/proof/images/dashboard.jpg" alt="Dashboard showing run counts, delivery rate, total cost, runs waiting on a person, cost by stage and cost by repository" width="85%">
+<img src="docs/images/dashboard.jpg" alt="Dashboard showing run counts, delivery rate, total cost, runs waiting on a person, cost by stage and cost by repository" width="85%">
 </div>
 
 ## Quick start
