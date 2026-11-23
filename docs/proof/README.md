@@ -8,7 +8,7 @@ Everything here can be checked against GitHub: each claim links to the issue, pu
 
 | What | Result |
 |---|---|
-| Real repository used | [`siddharthprakash1/surety`](https://github.com/siddharthprakash1/surety) (private, Python, 183 tests) |
+| Real repository used | [`siddharthprakash1/surety`](https://github.com/siddharthprakash1/surety) (Python, 183 tests) |
 | Issues given to the factory | 2 ([#1](https://github.com/siddharthprakash1/surety/issues/1), [#2](https://github.com/siddharthprakash1/surety/issues/2)) |
 | Pull requests it opened | 2 ([#3](https://github.com/siddharthprakash1/surety/pull/3), [#4](https://github.com/siddharthprakash1/surety/pull/4)), both open, not merged |
 | Revisions made from a human PR comment | 1 (on #4) |
@@ -101,7 +101,7 @@ The dollar figures are what the same token usage would cost at Anthropic's API l
 | Monitor run and one connectivity check | 2 | $0.119 |
 | **Total** | | **$1.896** |
 
-Nobody was billed that amount as a separate charge. On this machine the `claude` CLI is signed in with a claude.ai login on the **Turilabs Team plan**, and no API key is set. So the factory's agent calls were drawn from that Team seat's included usage, the same allowance used by Claude Code in normal use. If the seat's limit is reached, further runs stop or fall under whatever extra-usage setting the Turilabs workspace has; that setting is not visible from here.
+Nobody was billed that amount as a separate charge. On this machine the `claude` CLI is signed in with a claude.ai login on a **Claude Team plan**, and no API key is set. So the factory's agent calls were drawn from that Team seat's included usage, the same allowance used by Claude Code in normal use. If the seat's limit is reached, further runs stop or fall under whatever extra-usage setting that workspace has; that setting is not visible from here.
 
 Running the factory in GitHub Actions would be different: there it uses an `ANTHROPIC_API_KEY`, and the owner of that key is billed per token at these prices.
 

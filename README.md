@@ -1,100 +1,187 @@
-# Software factory
+<div align="center">
 
-A small software factory: label a GitHub issue, and a tested, reviewed pull request comes back. Every step is logged with its cost, people steer by commenting, and the factory keeps lessons per repository.
+# Software Factory
 
-```
-issue -> triage -> [spec -> human approval] -> implement -> verify -> [browser check] -> review -> deliver
-            |                                      ^           |             |             |
-            +-> park (asks for details)            +-----------+-------------+-------------+
-                                                     feedback, up to maxIterations
-```
+**Label a GitHub issue. Get back a tested, reviewed pull request.**
+
+A small, readable software factory: a loop of AI agents that takes an issue from triage to pull request,<br>
+logs what every step cost, takes direction from your comments, and learns from its mistakes.
+
+![Node 22+](https://img.shields.io/badge/node-22%2B-3fb950)
+![Dependencies: none](https://img.shields.io/badge/dependencies-none-388bfd)
+![Agents: Claude Code](https://img.shields.io/badge/agents-Claude%20Code-a371f7)
+[![Proof: real PRs](https://img.shields.io/badge/proof-real%20pull%20requests-d29922)](docs/proof/README.md)
+
+<img src="docs/images/pipeline.svg" alt="Pipeline: issue, triage, optional spec, implement, verify, optional browser check, review, pull request, with a feedback loop back to implement and a memory of lessons" width="100%">
+
+</div>
+
+## It works on a real repository
+
+The factory was pointed at [`surety`](https://github.com/siddharthprakash1/surety), a Python research codebase with 183 tests. Two issues were labelled `factory`. It opened two pull requests, and revised one of them when a person left a review comment.
+
+| | Issue | Pull request | Attempts | Usage at list price |
+|---|---|---|---|---|
+| 1 | [Metrics: NaN on empty input, ECE edge tests](https://github.com/siddharthprakash1/surety/issues/2) | [surety#3](https://github.com/siddharthprakash1/surety/pull/3) | 2 (review rejected the first) | $0.06 |
+| 2 | [Supervisor parser fixes](https://github.com/siddharthprakash1/surety/issues/1) | [surety#4](https://github.com/siddharthprakash1/surety/pull/4) | 1, then 1 revision from a comment | $0.06 |
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**The issue, with the factory's reply**
+
+<img src="docs/proof/images/surety-issue-2.jpg" alt="GitHub issue 2 on surety, labelled factory, with the factory's comment linking the pull request">
+
+</td>
+<td width="50%" valign="top">
+
+**The pull request it opened**
+
+<img src="docs/proof/images/surety-pr-3.jpg" alt="Pull request 3 on surety, opened by the factory, with triage and review notes and a passing test run">
+
+</td>
+</tr>
+</table>
+
+**Steering by comment.** A person asked for a change on the PR. The factory picked the comment up, pushed a second commit to the same PR, and replied:
+
+<div align="center">
+<img src="docs/proof/images/surety-pr-4-comments.jpg" alt="Pull request 4 conversation: a human review comment, followed by the factory's new commit and its reply" width="80%">
+</div>
+
+Everything behind these numbers is in **[docs/proof](docs/proof/README.md)**: screenshots, raw logs, eval results, costs, and a plain list of what has not been proven.
+
+## How it works
 
 | Stage | What runs | Outcome |
 |---|---|---|
-| triage | read-only agent, cheap model | `automate`, `needs_spec` or `park`, plus a complexity rating |
-| spec | read-only agent | writes a spec, then waits for a person to approve it |
-| implement | agent with edit and shell tools, in its own git worktree | model chosen by complexity; the factory commits |
-| verify | the repo's `verify` commands (no agent) | failure output goes back to implement |
-| browser check | optional; starts the app and an agent uses it in a real browser | pass, or problems that go back to implement |
-| review | read-only agent that did not write the code | `approve`, or comments that go back to implement |
-| deliver | no agent | a report and a branch, or a pull request |
-| learn | cheap agent, after a run that received feedback | updates `memory/<repo>.md` |
+| **Triage** | read-only agent, cheap model | `automate`, `needs_spec` or `park`, plus a complexity rating |
+| **Spec** | read-only agent, only when needed | writes a spec, then waits for a person to approve it |
+| **Implement** | agent with edit and shell tools, in its own git worktree | model chosen by complexity; the factory commits |
+| **Verify** | your repo's test commands, no agent | failure output goes back to implement |
+| **Browser check** | optional; starts the app and an agent uses it in a real browser | pass, or problems that go back to implement |
+| **Review** | read-only agent that did not write the code | `approve`, or comments that go back to implement |
+| **Deliver** | no agent | a pull request that closes the issue |
+| **Learn** | cheap agent, after a run that received feedback | updates `memory/<repo>.md` |
 
-## Proof
+This is what one run looks like. The review agent rejected the first attempt, the second passed, and the lesson was saved:
 
-[`docs/proof/`](docs/proof/README.md) records the factory's first real runs: two pull requests on a private repository, a revision driven by a PR comment, eval results, screenshots, raw logs and what it cost.
+```
+triage     haiku   automate/low          $0.008   18s
+implement  haiku   attempt 1 committed   $0.014  109s
+verify             passed                         27s     uv run pytest -q
+review     haiku   request_changes       $0.011   27s
+implement  haiku   attempt 2 committed   $0.014   90s
+verify             passed                         25s
+review     haiku   approve               $0.008   20s
+deliver            pr opened
+learn      haiku   lessons updated       $0.005   10s
+```
+
+## What else it does
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### People stay in charge
+
+- A reply on a **parked issue** re-triages it with the added details.
+- A reply to a **posted spec** approves or amends it.
+- A comment or review on a **factory PR** sends it back to implement and updates the same PR.
+- A run stops and asks for help after 3 failed attempts or when it hits its budget.
+
+### It remembers
+
+Failed checks, review rejections and human comments are distilled into short rules in [`memory/`](memory/), one plain markdown file per repository. Later runs read them.
+
+### It can be measured
+
+`factory eval` runs a suite of issues against several configurations, each with a hidden acceptance test the agents never see. Change a model or a prompt, and compare delivery rate and cost before you trust it.
+
+</td>
+<td width="50%" valign="top">
+
+### It checks the real app
+
+For repos with a UI, an agent opens the running app in a browser and tries the change. This is the screenshot it took after clicking Reset on a demo counter:
+
+<img src="docs/proof/images/browser-check-counter-reset.png" alt="Demo counter page showing 0 after the agent clicked Reset" width="70%">
+
+### It watches for breakage
+
+`factory monitor` runs your health checks and reads failed CI runs. When something fails, an agent finds the cause and files an issue for it.
+
+</td>
+</tr>
+</table>
+
+### A dashboard for the whole thing
+
+What is waiting on a person, every run, cost by stage and by repository, and the lessons learned.
+
+<div align="center">
+<img src="docs/proof/images/dashboard.jpg" alt="Dashboard showing run counts, delivery rate, total cost, runs waiting on a person, cost by stage and cost by repository" width="85%">
+</div>
 
 ## Quick start
 
-Needs Node 22+, git, the [`claude` CLI](https://claude.com/claude-code) signed in, and `gh` for anything touching GitHub. There are no dependencies to install.
+You need Node 22+, git, the [`claude` CLI](https://claude.com/claude-code) signed in, and [`gh`](https://cli.github.com) for anything that touches GitHub. There is nothing to install.
 
 ```sh
+git clone https://github.com/siddharthprakash1/software-factory
+cd software-factory
 npm run demo
 ```
 
-This creates throwaway demo repositories under `.factory/` and runs a sample issue. Agent calls cost money; a small issue costs a few cents.
+`npm run demo` creates two throwaway repositories under `.factory/` and runs a sample issue through the pipeline. Agent calls use your Claude plan or API key; a small issue is a few cents at list prices.
 
-## Working on a real repository
+## Use it on your own repository
 
-1. Clone it somewhere and add it to `repos` in `factory.config.mjs` with its `github` slug and `verify` commands.
+1. Clone the repository somewhere and add it to `repos` in [`factory.config.mjs`](factory.config.mjs):
+
+   ```js
+   myapp: {
+     path: '../myapp',
+     github: 'you/myapp',
+     verify: ['npm test'],
+   },
+   ```
+
 2. Label an issue `factory`.
-3. Run the poller:
+3. Start the poller:
 
-```sh
-npm run factory -- poll --watch 60
-```
+   ```sh
+   npm run factory -- poll --watch 60
+   ```
 
-Each pass of `poll` does three things:
-
-- **New issues** with the label are taken through the pipeline and delivered as a pull request that closes the issue.
-- **New comments** from people steer waiting runs. A reply on a parked issue re-triages it with the added details, a reply to a posted spec approves or amends it, and a comment or review on a factory PR sends it back to implement and updates the same PR.
-- **Merged or closed PRs** close out their run.
-
-The factory reports on the issue at each stop: the PR link, the spec to approve, the questions that got it parked, or why it is stuck.
+The factory comments on the issue at every stop: the PR link, the spec to approve, the questions that got it parked, or why it is stuck.
 
 ## Commands
 
-```sh
-npm run factory -- run <issue> [--repo <name|path>] [--path <checkout>] [--pr]
-npm run factory -- resume <run-id> [--feedback "guidance"]
-npm run factory -- poll [--watch <seconds>]
-npm run factory -- monitor [--repo <name>] [--auto] [--signal "cmd"]
-npm run factory -- eval <suite.json> [--variant a,b]
-npm run factory -- status [run-id]
-npm run factory -- metrics
-npm run factory -- dashboard [--serve <port>]
-```
+| Command | What it does |
+|---|---|
+| `run <issue> [--repo <name>] [--pr]` | Take one issue through the pipeline. The issue is a markdown file, `<repo>#123`, or `gh:owner/repo#123`. |
+| `poll [--watch <seconds>]` | Pick up labelled GitHub issues, new human comments, and merged or closed PRs. |
+| `resume <run-id> [--feedback "..."]` | The local way to comment: answer, approve, unblock or revise a run. |
+| `monitor [--repo <name>] [--auto]` | Check repo health and propose issues. `--auto` lets the factory pick them up itself. |
+| `eval <suite.json> [--variant a,b]` | Run a suite against named variants from the config and compare them. |
+| `status [run-id]` | List runs, or show one run's step-by-step log. |
+| `metrics` | Delivery rate, cost per delivered change, cost by stage and repo. |
+| `dashboard [--serve <port>]` | Write the dashboard, and optionally serve it live. |
 
-- `run` takes a markdown file (first line is the title), `<repo>#123`, or `gh:owner/repo#123`.
-- `resume` is the local equivalent of commenting: answer a parked run, approve a spec, unblock a stuck run, or revise a delivered one.
-- `monitor` runs the repo's `signals` commands and reads failed CI runs. If something is failing, an agent finds the cause and files an issue labelled `factory-proposed` (or writes it to `.factory/inbox/` for repos without GitHub). `--auto` also adds the trigger label so the factory picks it up.
-- `eval` runs every case of a suite against each named variant from `config.variants` and prints delivery rate, hidden acceptance-test results, cost and time side by side.
-- `dashboard` shows what is waiting on a person, all runs, cost by stage and repo, and the lessons learned.
+Run any of them as `npm run factory -- <command>`.
 
-A run stops with status `needs_human` when it hits `maxIterations`, the budget, or an agent error. Its worktree in `.factory/workspaces/<run-id>` is a normal checkout, so a person can also finish the work by hand.
+## The factory is code
 
-## Memory
+Everything that shapes behaviour is in one file, [`factory.config.mjs`](factory.config.mjs): the repositories, the limits, and for each stage the harness, model and tools. `implement` and `review` pick a model from the complexity that triage assigned. `variants` are named overrides you can test with `eval` before adopting them.
 
-When a run receives feedback (a failed check, a review rejection, a browser-check failure or a human comment), the learn stage distils it into short rules in `memory/<repo>.md`. Triage, implement and review read that file on later runs. The files are plain markdown and committed, so they can be read, edited or deleted by hand.
-
-## Evals
-
-A suite lists issues and, per issue, a hidden acceptance test the agents never see:
-
-```sh
-npm run factory -- eval examples/evals/demo.json --variant default,review-sonnet,all-haiku
-```
-
-Use it before changing a model, prompt or tool list in the config. Eval runs do not read or write memory and are left out of `metrics`.
-
-## GitHub Actions
-
-`templates/github-workflow.yml` runs the factory on a GitHub runner when an issue is labelled. Copy it into the target repository and add the two secrets it names. It has not been run yet, and it handles the initial run only: comment steering needs the poller on a machine that keeps `.factory/`.
-
-## Project layout
+<details>
+<summary><b>Project layout</b></summary>
 
 ```
-factory.config.mjs      the factory as code: repos, limits, stages, eval variants
+factory.config.mjs      repos, limits, stages, eval variants
 memory/<repo>.md        lessons learned per repository
 src/
   cli.mjs               command-line entry point
@@ -113,16 +200,26 @@ src/
 scripts/setup-demo.mjs  creates the demo repositories
 templates/              GitHub Actions workflow for target repositories
 examples/               demo-repo, demo-site, sample issues, an eval suite
-.factory/               generated, not committed: runs, worktrees, clones, inbox, eval results
+docs/proof/             evidence from the first real runs
+.factory/               generated, not committed: runs, worktrees, clones, eval results
 ```
 
-## Limits
+</details>
 
-- Agents run on the machine that runs the factory, isolated only by a git worktree. There is no sandbox.
-- The browser check relies on the Playwright MCP server being available to the `claude` CLI.
-- Non-Claude harnesses are supported by the config but have not been exercised.
-- The monitor's GitHub path (reading failed CI runs, filing issues) and the Actions workflow have not been exercised.
+<details>
+<summary><b>Running it in GitHub Actions</b></summary>
+
+[`templates/github-workflow.yml`](templates/github-workflow.yml) runs the factory on a GitHub runner when an issue is labelled. Copy it into the target repository and add the secrets it names. It has not been run yet, and it handles the first run only: comment steering needs the poller on a machine that keeps `.factory/`.
+
+</details>
+
+## Honest limits
+
+- Agents run on the machine that runs the factory, isolated only by a git worktree. There is no sandbox, so point it only at repositories and issues you trust.
+- The two surety PRs are open, not merged. Tests pass, but no maintainer has reviewed them yet.
+- The browser check needs the Playwright MCP server available to the `claude` CLI, and has only been tried on a demo page.
+- Not yet exercised: the GitHub Actions workflow, the monitor's GitHub path, replies to parked issues and specs, and non-Claude harnesses.
 
 ## Background
 
-The design follows Zach Lloyd's "The guide to software factories"; the memory loop follows the "knowledge factory" idea from LangChain.
+The design follows Zach Lloyd's "The guide to software factories". The memory loop follows the "knowledge factory" idea from LangChain.

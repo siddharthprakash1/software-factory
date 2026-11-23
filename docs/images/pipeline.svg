@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8b949e"/>
+    </marker>
+    <marker id="arrow-loop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#d29922"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="400" rx="16" fill="#0d1117"/>
+  <rect x="0.5" y="0.5" width="1199" height="399" rx="16" fill="none" stroke="#30363d"/>
+
+  <text x="36" y="48" fill="#e6edf3" font-size="20" font-weight="600">One issue in, one reviewed pull request out</text>
+  <text x="36" y="74" fill="#8b949e" font-size="14">Every box is a stage. Each agent stage runs a separate model call, and every call is logged with its cost.</text>
+
+  <!-- connectors -->
+  <g stroke="#8b949e" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+    <path d="M156 152 H178"/>
+    <path d="M300 152 H322"/>
+    <path d="M444 152 H466"/>
+    <path d="M588 152 H610"/>
+    <path d="M732 152 H754"/>
+    <path d="M876 152 H898"/>
+    <path d="M1020 152 H1042"/>
+  </g>
+
+  <!-- people: issue and pull request -->
+  <g fill="#21162d" stroke="#a371f7" stroke-width="1.5">
+    <rect x="36" y="116" width="120" height="72" rx="10"/>
+    <rect x="1044" y="116" width="120" height="72" rx="10"/>
+  </g>
+  <!-- agent stages -->
+  <g fill="#0f1f38" stroke="#388bfd" stroke-width="1.5">
+    <rect x="180" y="116" width="120" height="72" rx="10"/>
+    <rect x="324" y="116" width="120" height="72" rx="10" stroke-dasharray="6 4"/>
+    <rect x="468" y="116" width="120" height="72" rx="10"/>
+    <rect x="756" y="116" width="120" height="72" rx="10" stroke-dasharray="6 4"/>
+    <rect x="900" y="116" width="120" height="72" rx="10"/>
+  </g>
+  <!-- deterministic stage -->
+  <rect x="612" y="116" width="120" height="72" rx="10" fill="#0f2417" stroke="#3fb950" stroke-width="1.5"/>
+
+  <g text-anchor="middle" fill="#e6edf3" font-size="15" font-weight="600">
+    <text x="96" y="148">Issue</text>
+    <text x="240" y="148">Triage</text>
+    <text x="384" y="148">Spec</text>
+    <text x="528" y="148">Implement</text>
+    <text x="672" y="148">Verify</text>
+    <text x="816" y="148">Browser check</text>
+    <text x="960" y="148">Review</text>
+    <text x="1104" y="148">Pull request</text>
+  </g>
+  <g text-anchor="middle" fill="#8b949e" font-size="13">
+    <text x="96" y="168">labelled factory</text>
+    <text x="240" y="168">automate or park</text>
+    <text x="384" y="168">you approve it</text>
+    <text x="528" y="168">own git worktree</text>
+    <text x="672" y="168">runs your tests</text>
+    <text x="816" y="168">uses the real app</text>
+    <text x="960" y="168">a second agent</text>
+    <text x="1104" y="168">closes the issue</text>
+  </g>
+
+  <!-- feedback loop -->
+  <g stroke="#d29922" stroke-width="1.5" fill="none">
+    <path d="M672 188 V236"/>
+    <path d="M816 188 V236"/>
+    <path d="M960 188 V236"/>
+    <path d="M1104 188 V236"/>
+    <path d="M1104 236 H548 V192" marker-end="url(#arrow-loop)"/>
+  </g>
+  <text x="816" y="260" text-anchor="middle" fill="#d29922" font-size="13">failed checks, review comments and your PR comments go back to implement</text>
+
+  <!-- memory -->
+  <rect x="180" y="286" width="408" height="44" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="384" y="313" text-anchor="middle" fill="#e6edf3" font-size="13"><tspan font-weight="600">Memory</tspan><tspan fill="#8b949e">  lessons from past feedback, read by every run</tspan></text>
+  <g stroke="#30363d" stroke-width="1.5" fill="none" stroke-dasharray="3 4">
+    <path d="M240 286 V190"/>
+    <path d="M508 286 V190"/>
+  </g>
+
+  <!-- legend -->
+  <g font-size="12" fill="#8b949e">
+    <rect x="36" y="358" width="14" height="14" rx="3" fill="#21162d" stroke="#a371f7"/>
+    <text x="58" y="370">on GitHub, where people work</text>
+    <rect x="260" y="358" width="14" height="14" rx="3" fill="#0f1f38" stroke="#388bfd"/>
+    <text x="282" y="370">agent</text>
+    <rect x="344" y="358" width="14" height="14" rx="3" fill="#0f2417" stroke="#3fb950"/>
+    <text x="366" y="370">plain commands, no agent</text>
+    <rect x="540" y="358" width="14" height="14" rx="3" fill="#0f1f38" stroke="#388bfd" stroke-dasharray="4 3"/>
+    <text x="562" y="370">only when needed</text>
+  </g>
+</svg>
