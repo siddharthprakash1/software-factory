@@ -56,7 +56,7 @@ The whole sequence is in the event log for run `20261124-071245-supervisor-parse
 
 ### Screenshots
 
-The four github.com screenshots below were taken on 24 November 2026 **of the first runs**, before the repository was recreated. They show the same issues and the same flow, but their commit ids, dates and comment text differ from the live pages linked above. They will be replaced with screenshots of the rerun.
+These are screenshots of the public github.com pages, taken signed out on 24 November 2026 after the rerun. The last two show the PR #4 conversation and its six commits: two from the first delivery, three from the stuck revision, and one from the finish.
 
 ![Issue #2 on github.com with the factory's comment and the linked PR](images/surety-issue-2.jpg)
 
@@ -117,7 +117,7 @@ Running the factory in GitHub Actions would be different: there it uses an `ANTH
 
 ## What this does not prove
 
-- **The issue and PR screenshots are of the first runs**, as said above. The raw GitHub CLI records of the rerun are saved as [`data/surety-pr-3.json`](data/surety-pr-3.json), [`data/surety-pr-4.json`](data/surety-pr-4.json) and the issue files. The links are the final check.
+- **A screenshot can be edited.** The raw GitHub CLI records of the same pages are saved as [`data/surety-pr-3.json`](data/surety-pr-3.json), [`data/surety-pr-4.json`](data/surety-pr-4.json) and the issue files. The links are the final check.
 - **The PRs are not merged.** Each run's tests passed in its worktree, but nobody with knowledge of surety has reviewed the diffs.
 - **The rerun had an advantage:** the two lessons learned on the first runs were already in memory.
 - **PR #4's description shows the numbers from when it was opened.** The factory pushes revisions and comments, but does not rewrite the description.

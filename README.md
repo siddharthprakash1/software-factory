@@ -45,13 +45,13 @@ The factory was pointed at [`surety`](https://github.com/siddharthprakash1/suret
 </tr>
 </table>
 
-**Steering by comment.** A person asked for a change on the PR (bottom). The factory picked the comment up, pushed a second commit to the same PR, and replied (top):
+**Steering by comment.** A person asked for a rename on the PR (top). The factory picked the comment up and pushed new commits to the same PR. A second comment told it to finish, and it replied (bottom):
 
 <div align="center">
 <a href="https://github.com/siddharthprakash1/surety/pull/4"><img src="docs/images/steering.jpg" alt="Pull request 4 conversation: a human review comment, followed by the factory's new commit and its reply" width="75%"></a>
 </div>
 
-The screenshots are from the first runs of these two issues; the repository was later recreated and the issues run again, so commit ids and comments on the live pages differ. The rerun also exposed a bug in the factory, which is written up with the fix in the proof.
+These are the second runs of both issues: the repository was recreated in between. The rerun exposed a bug in the factory, which is written up with the fix in the proof.
 
 Everything behind these numbers is in **[docs/proof](docs/proof/README.md)**: full-page screenshots, raw logs, eval results, costs, and a plain list of what has not been proven.
 

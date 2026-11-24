@@ -1,3 +1,4 @@
 # Everything the factory generates: runs, worktrees, the demo repo
 .factory/
 node_modules/
+.playwright-mcp/
