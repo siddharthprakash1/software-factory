@@ -51,6 +51,17 @@ test('a correct change that goes beyond the issue is sent back', (t) => {
   assert.match(w.calls('implement')[1].prompt, /goes beyond the issue[\s\S]*reformatted the whole file/);
 });
 
+test('scope notes send a change back once, then go to the human reviewer', (t) => {
+  const w = world({ ...happy, implement: [reply.write('fixed\n'), reply.write('fixed.\n')], review: [approveWith(['an extra test'])] });
+  t.after(w.cleanup);
+  w.factory('run', w.issueFile);
+  const run = w.run();
+  assert.equal(run.status, 'ready_for_review');
+  assert.equal(run.iteration, 2);
+  assert.equal(w.calls('review').length, 2);
+  assert.deepEqual(run.scopeNotes, ['an extra test']);
+});
+
 test('hidden text in an issue never reaches an agent', (t) => {
   const w = world(happy);
   t.after(w.cleanup);

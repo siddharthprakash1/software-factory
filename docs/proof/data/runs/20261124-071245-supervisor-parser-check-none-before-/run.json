@@ -1,0 +1,323 @@
+{
+  "id": "20261124-071245-supervisor-parser-check-none-before-",
+  "issue": {
+    "title": "Supervisor parser: check NONE before candidate ids and reject ids not in state.options",
+    "body": "Deferred minors from `docs/handover/ledger/progress.md` (Task 4), all in the supervisor's answer parsing:\n\n1. An answer such as `NONE, not a1` is parsed as `a1`. An abstention (`NONE`) must be checked first and win.\n2. A candidate id that is not among `state.options` is still accepted by `_parse`. It should be treated as unparsed.\n3. An id preceded by a hyphen (e.g. `-E1`) is rejected by the lookbehind. It should parse as `E1`.\n4. There is no parametrized parse test. Add one covering `E1` vs `E12`, trailing punctuation, the three cases above, and the HTTP error path.\n\nKeep the existing behaviour for everything else, and keep the change confined to the supervisor module and its tests.\n",
+    "url": "https://github.com/siddharthprakash1/surety/issues/1",
+    "github": "siddharthprakash1/surety",
+    "number": 1,
+    "source": "gh:siddharthprakash1/surety#1",
+    "repoName": "surety"
+  },
+  "repoName": "surety",
+  "repo": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\repos\\surety",
+  "github": "siddharthprakash1/surety",
+  "worktree": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\workspaces\\20261124-071245-supervisor-parser-check-none-before-",
+  "branch": "factory/20261124-071245-supervisor-parser-check-none-before-",
+  "base": "792d60d7366b767397049344aa15f0af70702edb",
+  "baseBranch": "main",
+  "openPr": true,
+  "status": "ready_for_review",
+  "next": "deliver",
+  "iteration": 2,
+  "budgetUsd": 3,
+  "costUsd": 0.17600270000000004,
+  "startedAt": "2026-11-24T07:12:47.550Z",
+  "lastSeenAt": "2026-11-24T07:28:00Z",
+  "feedbackLog": [
+    {
+      "source": "code review",
+      "text": "The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- choose() was restructured: the abstention flag is now set early and returns directly, and the allowed-list filter is new. These are needed for items 1 and 2 but go slightly beyond a one-line fix.\n- test_none_in_reasoning_fallback_is_abstention and test_candidate_outside_options_is_unparsed are not in the issue's list by name, but they cover items 1 and 2."
+    },
+    {
+      "source": "human",
+      "text": "Guidance from the human reviewer: In `choose()`, rename the local variable `none` to `abstained`. `none` reads too much like `None` two lines later. No behaviour change."
+    },
+    {
+      "source": "code review",
+      "text": "The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- test_reasoning_fallback_none_is_abstention is a new test function the issue did not name. It exercises NONE-first on the fallback path, which is related to item 1, but reviewers may ask for it to be removed."
+    },
+    {
+      "source": "code review",
+      "text": "The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- The 'a1 or NONE' parametrized case is a NONE-after-candidate boundary that the issue does not name explicitly; it follows from item 1 but is an extra test case.\n- choose() now filters `ids` even when candidate_ids is None, where the filter is redundant (the default already comes from state.options). This is harmless and sits within item 2."
+    },
+    {
+      "source": "code review",
+      "text": "The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- New test function test_reasoning_fallback_none_is_abstention covers an unnamed boundary (NONE in reasoning fallback text winning over a candidate id); the issue names only the parametrized test.\n- choose() introduces the locals `ids` and `abstained` and restructures the abstention assignment, which is more than the smallest in-place edit needed for the NONE-first fix."
+    },
+    {
+      "source": "human",
+      "text": "The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- New test function test_reasoning_fallback_none_is_abstention covers an unnamed boundary (NONE in reasoning fallback text winning over a candidate id); the issue names only the parametrized test.\n- choose() introduces the locals `ids` and `abstained` and restructures the abstention assignment, which is more than the smallest in-place edit needed for the NONE-first fix.\n\nGuidance from the human reviewer: Keep the code and tests as they are now, including the `abstained` rename and the extra NONE tests. Do not remove anything else; just finish the revision."
+    },
+    {
+      "source": "code review",
+      "text": "The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- test_reasoning_fallback_none_is_abstention adds a test for a reasoning-fallback boundary the issue does not name; it should be removed or moved to a follow-up."
+    }
+  ],
+  "events": [
+    {
+      "at": "2026-11-24T07:13:13.361Z",
+      "stage": "triage",
+      "outcome": "automate/low",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.01027712,
+      "durationMs": 25806,
+      "tokensIn": 193342,
+      "tokensOut": 3693
+    },
+    {
+      "at": "2026-11-24T07:14:25.638Z",
+      "stage": "implement",
+      "outcome": "attempt 1 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.013936740000000001,
+      "durationMs": 72026,
+      "tokensIn": 457901,
+      "tokensOut": 5538
+    },
+    {
+      "at": "2026-11-24T07:14:49.277Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 23594
+    },
+    {
+      "at": "2026-11-24T07:15:19.442Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.009398160000000001,
+      "durationMs": 30115,
+      "tokensIn": 93473,
+      "tokensOut": 5278
+    },
+    {
+      "at": "2026-11-24T07:16:22.003Z",
+      "stage": "implement",
+      "outcome": "attempt 2 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.01340645,
+      "durationMs": 62287,
+      "tokensIn": 301266,
+      "tokensOut": 6950
+    },
+    {
+      "at": "2026-11-24T07:16:45.536Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 23488
+    },
+    {
+      "at": "2026-11-24T07:17:16.758Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.01120618,
+      "durationMs": 31174,
+      "tokensIn": 200151,
+      "tokensOut": 5410
+    },
+    {
+      "at": "2026-11-24T07:17:23.333Z",
+      "stage": "deliver",
+      "outcome": "pr opened"
+    },
+    {
+      "at": "2026-11-24T07:17:35.314Z",
+      "stage": "learn",
+      "outcome": "lessons updated",
+      "model": "haiku",
+      "costUsd": 0.00515749,
+      "durationMs": 11977
+    },
+    {
+      "at": "2026-11-24T07:18:07.854Z",
+      "stage": "human",
+      "outcome": "resumed with guidance"
+    },
+    {
+      "at": "2026-11-24T07:19:17.312Z",
+      "stage": "implement",
+      "outcome": "attempt 1 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.009477830000000001,
+      "durationMs": 69183,
+      "tokensIn": 192489,
+      "tokensOut": 2816
+    },
+    {
+      "at": "2026-11-24T07:19:41.048Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 23691
+    },
+    {
+      "at": "2026-11-24T07:20:16.068Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.01142869,
+      "durationMs": 34970,
+      "tokensIn": 148722,
+      "tokensOut": 6450
+    },
+    {
+      "at": "2026-11-24T07:21:01.237Z",
+      "stage": "implement",
+      "outcome": "attempt 2 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.00951449,
+      "durationMs": 44913,
+      "tokensIn": 193594,
+      "tokensOut": 2822
+    },
+    {
+      "at": "2026-11-24T07:21:24.805Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 23525
+    },
+    {
+      "at": "2026-11-24T07:21:55.128Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.01077751,
+      "durationMs": 30272,
+      "tokensIn": 147997,
+      "tokensOut": 5275
+    },
+    {
+      "at": "2026-11-24T07:22:55.399Z",
+      "stage": "implement",
+      "outcome": "attempt 3 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.013619040000000002,
+      "durationMs": 60017,
+      "tokensIn": 315438,
+      "tokensOut": 6285
+    },
+    {
+      "at": "2026-11-24T07:23:19.150Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 23694
+    },
+    {
+      "at": "2026-11-24T07:23:52.303Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.009973640000000002,
+      "durationMs": 33108,
+      "tokensIn": 92150,
+      "tokensOut": 6376
+    },
+    {
+      "at": "2026-11-24T07:28:14.292Z",
+      "stage": "human",
+      "outcome": "resumed with guidance"
+    },
+    {
+      "at": "2026-11-24T07:29:17.174Z",
+      "stage": "implement",
+      "outcome": "attempt 1 changed nothing",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.00994656,
+      "durationMs": 62777,
+      "tokensIn": 195766,
+      "tokensOut": 3409
+    },
+    {
+      "at": "2026-11-24T07:29:41.601Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 24321
+    },
+    {
+      "at": "2026-11-24T07:30:11.556Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.010767819999999999,
+      "durationMs": 29900,
+      "tokensIn": 148423,
+      "tokensOut": 5363
+    },
+    {
+      "at": "2026-11-24T07:30:58.150Z",
+      "stage": "implement",
+      "outcome": "attempt 2 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.009388330000000002,
+      "durationMs": 46317,
+      "tokensIn": 193804,
+      "tokensOut": 2396
+    },
+    {
+      "at": "2026-11-24T07:31:21.472Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 23277
+    },
+    {
+      "at": "2026-11-24T07:32:00.987Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.01226456,
+      "durationMs": 39466,
+      "tokensIn": 203104,
+      "tokensOut": 7025
+    },
+    {
+      "at": "2026-11-24T07:32:04.273Z",
+      "stage": "deliver",
+      "outcome": "pr updated"
+    },
+    {
+      "at": "2026-11-24T07:32:17.180Z",
+      "stage": "learn",
+      "outcome": "lessons updated",
+      "model": "haiku",
+      "costUsd": 0.005462089999999999,
+      "durationMs": 12902
+    }
+  ],
+  "triage": {
+    "decision": "automate",
+    "complexity": "low",
+    "reason": "All four deferred minors sit in one parser function and its call site in supervise/client.py, with the existing httpx_mock test file as the test home. The change is a few lines plus one parametrized test.",
+    "plan": "Files: src/surety/supervise/client.py, tests/test_supervisor.py. (1) In Supervisor.choose, check _is_none(text) before _parse and return (None, usage) with abstained=True when it matches. (2) In choose, restrict allowed to ids present in state.options. (3) In _parse, change the id lookbehind from (?<![\\w-]) to (?<!\\w), leaving the trailing lookahead and _is_none unchanged. (4) Add a parametrized test covering E1 vs E12, trailing punctuation, 'NONE, not a1', '-E1', and an unknown id; add an HTTP 5xx case asserting httpx.HTTPStatusError is raised, unless a human wants None instead. Add a test where the reasoning fallback contains NONE. Do not add other hardening. Confirm the HTTP error expectation before merging."
+  },
+  "verifyLog": "$ uv run pytest -q\n........................................................................ [ 37%]\r\n........................................................................ [ 74%]\r\n.................................................                        [100%]\r\n193 passed, 1 skipped in 21.01s\r\n\n",
+  "review": {
+    "verdict": "approve",
+    "summary": "The parser now checks NONE first, rejects candidate ids that are not in state.options, accepts a hyphen-preceded id such as -E1, and adds a parametrized test covering E1 vs E12, trailing punctuation, the three parser fixes and the HTTP error path. The change is confined to the supervisor module and its tests.",
+    "comments": [],
+    "out_of_scope": []
+  },
+  "feedback": "The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- test_reasoning_fallback_none_is_abstention adds a test for a reasoning-fallback boundary the issue does not name; it should be removed or moved to a follow-up.",
+  "pr": "https://github.com/siddharthprakash1/surety/pull/4",
+  "endedAt": "2026-11-24T07:32:04.275Z",
+  "learnedCount": 7,
+  "notifiedPr": true,
+  "scopeSentBack": true,
+  "scopeNotes": [],
+  "note": "https://github.com/siddharthprakash1/surety/pull/4"
+}

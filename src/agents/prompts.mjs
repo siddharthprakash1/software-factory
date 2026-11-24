@@ -58,7 +58,7 @@ ${diff}
 
 Check that the change does what the issue asks, is correct, has meaningful tests, and touches nothing unrelated. Only request changes for real defects, not style preferences.
 
-Separately list anything in the diff that the issue did not ask for: refactors, renamed or reformatted code, unrelated files, and above all tests that were deleted, skipped or weakened to make the checks pass.
+Separately list anything in the diff that the issue did not ask for: refactors, renamed or reformatted code, unrelated files, and above all tests that were deleted, skipped or weakened to make the checks pass. Leave out anything the issue's request needs in order to work, and tests that cover what it asks for: listing an item here sends the change back to be undone.
 
 End your answer with exactly one fenced json block:
 \`\`\`json

@@ -192,8 +192,12 @@ const STAGES = {
     run.review = r;
     record(run, 'review', r.verdict, meta);
     const extra = (r.out_of_scope ?? []).filter(Boolean);
-    if (r.verdict === 'approve' && !extra.length) return 'deliver';
+    // Scope notes send a change back once. If the reviewer still has some after that, a person
+    // decides: an approved change must not burn every attempt on a reviewer's taste.
+    run.scopeNotes = r.verdict === 'approve' && run.scopeSentBack ? extra : [];
+    if (r.verdict === 'approve' && (!extra.length || run.scopeSentBack)) return 'deliver';
     if (r.verdict === 'approve') {
+      run.scopeSentBack = true;
       setFeedback(run, 'code review', `The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- ${extra.join('\n- ')}`);
       return 'implement';
     }
@@ -269,6 +273,7 @@ export async function resume(config, id, { feedback } = {}) {
     setFeedback(run, 'human', `${run.status === 'needs_human' && run.feedback ? run.feedback + '\n\n' : ''}Guidance from the human reviewer: ${feedback}`);
   }
   run.next = RESUME_FROM[run.status] ?? run.next;
+  run.scopeSentBack = false;
   run.iteration = run.status === 'awaiting_spec_approval' ? run.iteration : 0;
   if (run.costUsd >= run.budgetUsd) run.budgetUsd += config.budgetUsd;
   record(run, 'human', feedback ? 'resumed with guidance' : 'resumed');

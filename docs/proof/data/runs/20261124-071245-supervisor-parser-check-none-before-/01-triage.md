@@ -1,0 +1,14 @@
+Triage: **automate**, low complexity. The fix is confined to `src/surety/supervise/client.py` and `tests/test_supervisor.py`. I did not change any files.
+
+What I found in the code:
+
+1. **NONE ordering.** `choose()` calls `_parse` before checking `_is_none`, so `"NONE, not a1"` returns `a1`. The fix is to check `_is_none(text)` first and return `None` with `abstained=True`.
+2. **Ids outside `state.options`.** `choose()` uses `candidate_ids` directly as `allowed`. `build_choose_prompt` already filters by label, so an unknown id is never shown to the model, but `_parse` would still accept it. The fix is to intersect `allowed` with `{o.id for o in state.options}`.
+3. **Hyphen before an id.** The id pattern in `_parse` uses `(?<![\w-])`. Changing it to `(?<!\w)` lets `-E1` parse as `E1`. The trailing lookahead `(?![\w-])` stays, so `E1-` is still rejected. `_is_none` keeps its current lookbehind so abstention matching does not widen as a side effect.
+4. **Parametrized tests.** Add one `@pytest.mark.parametrize` test over `E1` vs `E12` (`"E12"` must not parse as `E1`), trailing punctuation (`"E1."`), `"NONE, not a1"`, `"-E1"`, and an unknown id. Add an HTTP-error case that asserts the current behaviour: `choose` raises `httpx.HTTPStatusError` on a 5xx. The issue does not say whether a 5xx should become `None`. I read "keep the existing behaviour for everything else" as keeping the raise, so this is the one point to confirm.
+
+Risk to check: the reasoning-text fallback (`text = think[-200:]`) now goes through the NONE-first check. A reasoning tail that contains the word `NONE` will abstain where it previously picked the last id. The existing fallback tests do not cover that case, so the new test set should add one.
+
+```json
+{"decision": "automate", "complexity": "low", "reason": "All four deferred minors sit in one parser function and its call site in supervise/client.py, with the existing httpx_mock test file as the test home. The change is a few lines plus one parametrized test.", "plan": "Files: src/surety/supervise/client.py, tests/test_supervisor.py. (1) In Supervisor.choose, check _is_none(text) before _parse and return (None, usage) with abstained=True when it matches. (2) In choose, restrict allowed to ids present in state.options. (3) In _parse, change the id lookbehind from (?<![\\w-]) to (?<!\\w), leaving the trailing lookahead and _is_none unchanged. (4) Add a parametrized test covering E1 vs E12, trailing punctuation, 'NONE, not a1', '-E1', and an unknown id; add an HTTP 5xx case asserting httpx.HTTPStatusError is raised, unless a human wants None instead. Add a test where the reasoning fallback contains NONE. Do not add other hardening. Confirm the HTTP error expectation before merging."}
+```

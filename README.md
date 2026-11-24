@@ -23,8 +23,8 @@ The factory was pointed at [`surety`](https://github.com/siddharthprakash1/suret
 
 | | Issue | Pull request | Attempts | Usage at list price |
 |---|---|---|---|---|
-| 1 | [Metrics: NaN on empty input, ECE edge tests](https://github.com/siddharthprakash1/surety/issues/2) | [surety#3](https://github.com/siddharthprakash1/surety/pull/3) | 2 (review rejected the first) | $0.06 |
-| 2 | [Supervisor parser fixes](https://github.com/siddharthprakash1/surety/issues/1) | [surety#4](https://github.com/siddharthprakash1/surety/pull/4) | 1, then 1 revision from a comment | $0.06 |
+| 1 | [Metrics: NaN on empty input, ECE edge tests](https://github.com/siddharthprakash1/surety/issues/2) | [surety#3](https://github.com/siddharthprakash1/surety/pull/3) | 2 (review trimmed the first) | $0.07 |
+| 2 | [Supervisor parser fixes](https://github.com/siddharthprakash1/surety/issues/1) | [surety#4](https://github.com/siddharthprakash1/surety/pull/4) | 2, then a revision from a comment | $0.18 |
 
 <table>
 <tr>
@@ -51,6 +51,8 @@ The factory was pointed at [`surety`](https://github.com/siddharthprakash1/suret
 <a href="https://github.com/siddharthprakash1/surety/pull/4"><img src="docs/images/steering.jpg" alt="Pull request 4 conversation: a human review comment, followed by the factory's new commit and its reply" width="75%"></a>
 </div>
 
+The screenshots are from the first runs of these two issues; the repository was later recreated and the issues run again, so commit ids and comments on the live pages differ. The rerun also exposed a bug in the factory, which is written up with the fix in the proof.
+
 Everything behind these numbers is in **[docs/proof](docs/proof/README.md)**: full-page screenshots, raw logs, eval results, costs, and a plain list of what has not been proven.
 
 ## How it works
@@ -67,7 +69,7 @@ Everything behind these numbers is in **[docs/proof](docs/proof/README.md)**: fu
 | **Deliver** | no agent | a pull request that closes the issue |
 | **Learn** | cheap agent, after a run that received feedback | updates `memory/<repo>.md` |
 
-This is what one run looks like. The review agent rejected the first attempt, the second passed, and the lesson was saved:
+This is what one run looks like, from the first run on the metrics issue. The review agent rejected the first attempt, the second passed, and the lesson was saved:
 
 ```
 triage     haiku   automate/low          $0.008   18s
@@ -227,7 +229,7 @@ test/                   offline test suite with a scripted agent and a fake GitH
 
 ## Tested without spending anything
 
-`npm test` runs the real CLI against a scripted agent and a fake GitHub: 32 tests covering the pipeline, the guards, comment steering, parked issues, spec approval, the monitor and replay. They need no network and no model calls, and run on Linux and Windows in CI.
+`npm test` runs the real CLI against a scripted agent and a fake GitHub: 33 tests covering the pipeline, the guards, comment steering, parked issues, spec approval, the monitor and replay. They need no network and no model calls, and run on Linux and Windows in CI.
 
 ## Where this is going
 

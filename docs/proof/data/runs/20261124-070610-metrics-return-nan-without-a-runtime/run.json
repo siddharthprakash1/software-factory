@@ -1,0 +1,134 @@
+{
+  "id": "20261124-070610-metrics-return-nan-without-a-runtime",
+  "issue": {
+    "title": "Metrics: return NaN without a RuntimeWarning on empty input and cover ECE edge cases",
+    "body": "Deferred minors from `docs/handover/ledger/progress.md` (Task 1 and Task 2), in the eval metrics:\n\n1. Empty input currently yields NaN together with a NumPy `RuntimeWarning`. Return NaN explicitly, with no warning, for every metric that divides by the number of rows.\n2. ECE: the clamp for `p_max == 1.0` (must land in the last bin) and the sum over several non-empty bins are untested. Add tests with pinned numbers.\n3. `test_autonomous_error_counts_only_singletons` also asserts `automation_rate`. Split it so each test checks one thing.\n\nNo change to any reported number for non-empty input.\n",
+    "url": "https://github.com/siddharthprakash1/surety/issues/2",
+    "github": "siddharthprakash1/surety",
+    "number": 2,
+    "source": "gh:siddharthprakash1/surety#2",
+    "repoName": "surety"
+  },
+  "repoName": "surety",
+  "repo": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\repos\\surety",
+  "github": "siddharthprakash1/surety",
+  "worktree": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\workspaces\\20261124-070610-metrics-return-nan-without-a-runtime",
+  "branch": "factory/20261124-070610-metrics-return-nan-without-a-runtime",
+  "base": "792d60d7366b767397049344aa15f0af70702edb",
+  "baseBranch": "main",
+  "openPr": true,
+  "status": "ready_for_review",
+  "next": "deliver",
+  "iteration": 2,
+  "budgetUsd": 3,
+  "costUsd": 0.06606996000000001,
+  "startedAt": "2026-11-24T07:06:12.819Z",
+  "lastSeenAt": "2026-11-24T07:06:12.820Z",
+  "feedbackLog": [
+    {
+      "source": "code review",
+      "text": "The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- Explicit dtype=float / dtype=bool arguments in _top: not needed by the new guards; harmless hardening that was not requested."
+    }
+  ],
+  "events": [
+    {
+      "at": "2026-11-24T07:06:45.404Z",
+      "stage": "triage",
+      "outcome": "automate/low",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.011199320000000002,
+      "durationMs": 32580,
+      "tokensIn": 181828,
+      "tokensOut": 5507
+    },
+    {
+      "at": "2026-11-24T07:08:31.217Z",
+      "stage": "implement",
+      "outcome": "attempt 1 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.01730418,
+      "durationMs": 105453,
+      "tokensIn": 382587,
+      "tokensOut": 10958
+    },
+    {
+      "at": "2026-11-24T07:08:51.508Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 20245
+    },
+    {
+      "at": "2026-11-24T07:09:22.901Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.009567470000000002,
+      "durationMs": 31335,
+      "tokensIn": 94826,
+      "tokensOut": 5547
+    },
+    {
+      "at": "2026-11-24T07:10:33.555Z",
+      "stage": "implement",
+      "outcome": "attempt 2 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.01211273,
+      "durationMs": 70397,
+      "tokensIn": 255872,
+      "tokensOut": 4697
+    },
+    {
+      "at": "2026-11-24T07:10:53.588Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 19982
+    },
+    {
+      "at": "2026-11-24T07:11:31.059Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.01106667,
+      "durationMs": 37428,
+      "tokensIn": 97630,
+      "tokensOut": 7382
+    },
+    {
+      "at": "2026-11-24T07:11:38.206Z",
+      "stage": "deliver",
+      "outcome": "pr opened"
+    },
+    {
+      "at": "2026-11-24T07:11:46.583Z",
+      "stage": "learn",
+      "outcome": "lessons updated",
+      "model": "haiku",
+      "costUsd": 0.00481959,
+      "durationMs": 8373
+    }
+  ],
+  "triage": {
+    "decision": "automate",
+    "complexity": "low",
+    "reason": "The change is a few NaN guards in one module plus test additions and a test split, and no non-empty number changes. The only judgment call is making ECE return NaN on empty input, which the issue's wording does not directly cover.",
+    "plan": "src/surety/calib/metrics.py: add a _mean helper that returns NaN for empty input and use it in accuracy, brier, confident_error_rate, coverage, mean_set_size, automation_rate, autonomous_error_rate; add len==0 guards in ece (return NaN) and risk_coverage_curve (NaN for acted, risk, error_rate_all on empty input only, keeping risk=0.0 when nothing is acted on for non-empty input). tests/test_metrics.py: add an EMPTY_METRIC_CALLS parametrized table asserting no RuntimeWarning and NaN results; add pinned ECE tests for the p_max==1.0 clamp and a multi-bin sum (verify the hand-computed values); split test_autonomous_error_counts_only_singletons into automation_rate and autonomous_error_rate tests. Note that _mean and EMPTY_METRIC_CALLS do not exist yet and must be created. Check src/surety/eval/analyze.py (lines ~79-181) for how NaN from empty slices (e.g. sets[-TAIL:]) renders in reports. Argmax tie-breaking is out of scope."
+  },
+  "verifyLog": "$ uv run pytest -q\n........................................................................ [ 36%]\r\n........................................................................ [ 73%]\r\n...................................................                      [100%]\r\n195 passed, 1 skipped in 17.79s\r\n\n",
+  "review": {
+    "verdict": "approve",
+    "summary": "Empty-input NaN handling is applied to every row-count metric in metrics.py, and non-empty results are unchanged. The new ECE tests pin correct values, and the combined autonomous/automation test is split into two single-purpose tests with no assertions lost.",
+    "comments": [],
+    "out_of_scope": []
+  },
+  "feedback": "The change is correct but goes beyond the issue. Remove these parts and keep the rest:\n- Explicit dtype=float / dtype=bool arguments in _top: not needed by the new guards; harmless hardening that was not requested.",
+  "pr": "https://github.com/siddharthprakash1/surety/pull/3",
+  "note": "https://github.com/siddharthprakash1/surety/pull/3",
+  "endedAt": "2026-11-24T07:11:38.207Z",
+  "learnedCount": 1,
+  "notifiedPr": true
+}

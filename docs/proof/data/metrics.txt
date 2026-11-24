@@ -1,29 +1,29 @@
-Runs: 9   ready_for_review: 8   parked: 1
-Delivered: 89%   without human help: 67%   merged: 0
-Total cost: $1.460
-Cost per delivered change: $0.182
+Runs: 12   ready_for_review: 9   parked: 1   closed: 2
+Delivered: 75%   without human help: 58%   merged: 0
+Total cost: $1.724
+Cost per delivered change: $0.192
 Avg attempts per delivered change: 1.3
-Factory efficiency (delivered changes per $): 5.48
+Factory efficiency (delivered changes per $): 5.22
 
 By repo:
 ┌───────────┬──────┬───────────┬──────────┐
 │ (index)   │ runs │ delivered │ cost     │
 ├───────────┼──────┼───────────┼──────────┤
-│ demo      │ 6    │ 5         │ '$1.138' │
+│ demo      │ 7    │ 6         │ '$1.160' │
 │ demo-site │ 1    │ 1         │ '$0.203' │
-│ surety    │ 2    │ 2         │ '$0.119' │
+│ surety    │ 4    │ 2         │ '$0.361' │
 └───────────┴──────┴───────────┴──────────┘
 By stage:
 ┌───────────┬───────┬──────────┬─────────┐
 │ (index)   │ calls │ cost     │ minutes │
 ├───────────┼───────┼──────────┼─────────┤
-│ triage    │ 9     │ '$0.065' │ 2.3     │
-│ implement │ 11    │ '$0.380' │ 8.2     │
-│ verify    │ 11    │ '$0.000' │ 1.9     │
-│ review    │ 11    │ '$0.700' │ 3.3     │
-│ deliver   │ 9     │ '$0.000' │ 0       │
+│ triage    │ 12    │ '$0.094' │ 3.6     │
+│ implement │ 21    │ '$0.497' │ 18.5    │
+│ verify    │ 21    │ '$0.000' │ 5.4     │
+│ review    │ 21    │ '$0.803' │ 8.5     │
+│ deliver   │ 13    │ '$0.000' │ 0       │
 │ spec      │ 1     │ '$0.124' │ 0.4     │
-│ human     │ 2     │ '$0.000' │ 0       │
+│ human     │ 4     │ '$0.000' │ 0       │
 │ verify_ui │ 1     │ '$0.181' │ 0.5     │
-│ learn     │ 2     │ '$0.010' │ 0.3     │
+│ learn     │ 5     │ '$0.025' │ 0.9     │
 └───────────┴───────┴──────────┴─────────┘

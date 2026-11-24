@@ -1,39 +1,58 @@
 
-20261123-193441-metrics-return-nan-without-a-runtime
-  status: ready_for_review   cost: $0.060   attempts: 2
+20261124-070610-metrics-return-nan-without-a-runtime
+  status: ready_for_review   cost: $0.066   attempts: 2
   https://github.com/siddharthprakash1/surety/pull/3
 ┌─────────┬─────────────┬─────────┬───────────────────────┬──────────┬──────┐
 │ (index) │ stage       │ model   │ outcome               │ cost     │ secs │
 ├─────────┼─────────────┼─────────┼───────────────────────┼──────────┼──────┤
-│ 0       │ 'triage'    │ 'haiku' │ 'automate/low'        │ '$0.008' │ 18   │
-│ 1       │ 'implement' │ 'haiku' │ 'attempt 1 committed' │ '$0.014' │ 109  │
-│ 2       │ 'verify'    │ ''      │ 'passed'              │ ''       │ 27   │
-│ 3       │ 'review'    │ 'haiku' │ 'request_changes'     │ '$0.011' │ 27   │
-│ 4       │ 'implement' │ 'haiku' │ 'attempt 2 committed' │ '$0.014' │ 90   │
-│ 5       │ 'verify'    │ ''      │ 'passed'              │ ''       │ 25   │
-│ 6       │ 'review'    │ 'haiku' │ 'approve'             │ '$0.008' │ 20   │
+│ 0       │ 'triage'    │ 'haiku' │ 'automate/low'        │ '$0.011' │ 33   │
+│ 1       │ 'implement' │ 'haiku' │ 'attempt 1 committed' │ '$0.017' │ 105  │
+│ 2       │ 'verify'    │ ''      │ 'passed'              │ ''       │ 20   │
+│ 3       │ 'review'    │ 'haiku' │ 'approve'             │ '$0.010' │ 31   │
+│ 4       │ 'implement' │ 'haiku' │ 'attempt 2 committed' │ '$0.012' │ 70   │
+│ 5       │ 'verify'    │ ''      │ 'passed'              │ ''       │ 20   │
+│ 6       │ 'review'    │ 'haiku' │ 'approve'             │ '$0.011' │ 37   │
 │ 7       │ 'deliver'   │ ''      │ 'pr opened'           │ ''       │ ''   │
-│ 8       │ 'learn'     │ 'haiku' │ 'lessons updated'     │ '$0.005' │ 10   │
+│ 8       │ 'learn'     │ 'haiku' │ 'lessons updated'     │ '$0.005' │ 8    │
 └─────────┴─────────────┴─────────┴───────────────────────┴──────────┴──────┘
 
-20261123-194022-supervisor-parser-check-none-before-
-  status: ready_for_review   cost: $0.059   attempts: 1
+
+20261124-071245-supervisor-parser-check-none-before-
+  status: ready_for_review   cost: $0.176   attempts: 2
   https://github.com/siddharthprakash1/surety/pull/4
-┌─────────┬─────────────┬─────────┬─────────────────────────┬──────────┬──────┐
-│ (index) │ stage       │ model   │ outcome                 │ cost     │ secs │
-├─────────┼─────────────┼─────────┼─────────────────────────┼──────────┼──────┤
-│ 0       │ 'triage'    │ 'haiku' │ 'automate/low'          │ '$0.009' │ 22   │
-│ 1       │ 'implement' │ 'haiku' │ 'attempt 1 committed'   │ '$0.014' │ 77   │
-│ 2       │ 'verify'    │ ''      │ 'passed'                │ ''       │ 29   │
-│ 3       │ 'review'    │ 'haiku' │ 'approve'               │ '$0.011' │ 37   │
-│ 4       │ 'deliver'   │ ''      │ 'pr opened'             │ ''       │ ''   │
-│ 5       │ 'human'     │ ''      │ 'resumed with guidance' │ ''       │ ''   │
-│ 6       │ 'implement' │ 'haiku' │ 'attempt 1 committed'   │ '$0.009' │ 67   │
-│ 7       │ 'verify'    │ ''      │ 'passed'                │ ''       │ 26   │
-│ 8       │ 'review'    │ 'haiku' │ 'approve'               │ '$0.011' │ 33   │
-│ 9       │ 'deliver'   │ ''      │ 'pr updated'            │ ''       │ ''   │
-│ 10      │ 'learn'     │ 'haiku' │ 'lessons updated'       │ '$0.005' │ 10   │
-└─────────┴─────────────┴─────────┴─────────────────────────┴──────────┴──────┘
+┌─────────┬─────────────┬─────────┬─────────────────────────────┬──────────┬──────┐
+│ (index) │ stage       │ model   │ outcome                     │ cost     │ secs │
+├─────────┼─────────────┼─────────┼─────────────────────────────┼──────────┼──────┤
+│ 0       │ 'triage'    │ 'haiku' │ 'automate/low'              │ '$0.010' │ 26   │
+│ 1       │ 'implement' │ 'haiku' │ 'attempt 1 committed'       │ '$0.014' │ 72   │
+│ 2       │ 'verify'    │ ''      │ 'passed'                    │ ''       │ 24   │
+│ 3       │ 'review'    │ 'haiku' │ 'approve'                   │ '$0.009' │ 30   │
+│ 4       │ 'implement' │ 'haiku' │ 'attempt 2 committed'       │ '$0.013' │ 62   │
+│ 5       │ 'verify'    │ ''      │ 'passed'                    │ ''       │ 23   │
+│ 6       │ 'review'    │ 'haiku' │ 'approve'                   │ '$0.011' │ 31   │
+│ 7       │ 'deliver'   │ ''      │ 'pr opened'                 │ ''       │ ''   │
+│ 8       │ 'learn'     │ 'haiku' │ 'lessons updated'           │ '$0.005' │ 12   │
+│ 9       │ 'human'     │ ''      │ 'resumed with guidance'     │ ''       │ ''   │
+│ 10      │ 'implement' │ 'haiku' │ 'attempt 1 committed'       │ '$0.009' │ 69   │
+│ 11      │ 'verify'    │ ''      │ 'passed'                    │ ''       │ 24   │
+│ 12      │ 'review'    │ 'haiku' │ 'approve'                   │ '$0.011' │ 35   │
+│ 13      │ 'implement' │ 'haiku' │ 'attempt 2 committed'       │ '$0.010' │ 45   │
+│ 14      │ 'verify'    │ ''      │ 'passed'                    │ ''       │ 24   │
+│ 15      │ 'review'    │ 'haiku' │ 'approve'                   │ '$0.011' │ 30   │
+│ 16      │ 'implement' │ 'haiku' │ 'attempt 3 committed'       │ '$0.014' │ 60   │
+│ 17      │ 'verify'    │ ''      │ 'passed'                    │ ''       │ 24   │
+│ 18      │ 'review'    │ 'haiku' │ 'approve'                   │ '$0.010' │ 33   │
+│ 19      │ 'human'     │ ''      │ 'resumed with guidance'     │ ''       │ ''   │
+│ 20      │ 'implement' │ 'haiku' │ 'attempt 1 changed nothing' │ '$0.010' │ 63   │
+│ 21      │ 'verify'    │ ''      │ 'passed'                    │ ''       │ 24   │
+│ 22      │ 'review'    │ 'haiku' │ 'approve'                   │ '$0.011' │ 30   │
+│ 23      │ 'implement' │ 'haiku' │ 'attempt 2 committed'       │ '$0.009' │ 46   │
+│ 24      │ 'verify'    │ ''      │ 'passed'                    │ ''       │ 23   │
+│ 25      │ 'review'    │ 'haiku' │ 'approve'                   │ '$0.012' │ 39   │
+│ 26      │ 'deliver'   │ ''      │ 'pr updated'                │ ''       │ ''   │
+│ 27      │ 'learn'     │ 'haiku' │ 'lessons updated'           │ '$0.005' │ 13   │
+└─────────┴─────────────┴─────────┴─────────────────────────────┴──────────┴──────┘
+
 
 20261123-193238-add-a-reset-button-to-the-counter-pa
   status: ready_for_review   cost: $0.203   attempts: 1
@@ -48,3 +67,4 @@
 │ 4       │ 'review'    │ 'haiku'  │ 'approve'             │ '$0.007' │ 15   │
 │ 5       │ 'deliver'   │ ''       │ 'branch ready'        │ ''       │ ''   │
 └─────────┴─────────────┴──────────┴───────────────────────┴──────────┴──────┘
+

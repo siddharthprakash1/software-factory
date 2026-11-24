@@ -1,0 +1,9 @@
+The change does what the issue asks. I found no real defects. The abstention check now runs first, candidate ids are filtered against `state.options`, a hyphen before an id no longer blocks a match, and the parametrized and HTTP-error tests cover the named cases. `_is_none` keeps its `(?<![\w-])` lookbehind, so the hyphen widening does not reach abstention markers.
+
+One behaviour change follows from item 1 and is worth knowing about. In the reasoning fallback, `_is_none` now runs on the 200-character reasoning tail. A stray `NONE` in that tail overrides a valid id that the old code would have returned. The issue asks for NONE to win, so I am not requesting a change.
+
+Tests: no existing test was deleted, skipped or weakened. The `a1 or NONE` case is a related NONE-position boundary rather than one of the named cases, but it follows directly from "NONE must win."
+
+```json
+{"verdict": "approve", "summary": "The parser now checks NONE before candidate ids, filters candidate ids against state.options, accepts hyphen-preceded ids, and adds a parametrized parse test plus an HTTP-error test covering the issue's cases. The change is confined to the supervisor module and its tests, and no existing test was removed or weakened.", "comments": ["Non-blocking: in the reasoning fallback, _is_none now scans the 200-character reasoning tail, so a NONE mentioned mid-reasoning overrides a valid id that the old code would have returned. This follows from the issue's 'NONE must win' rule, but it is a real behaviour change worth a note in the PR."], "out_of_scope": ["The 'a1 or NONE' parametrized case is a NONE-after-candidate boundary that the issue does not name explicitly; it follows from item 1 but is an extra test case.", "choose() now filters `ids` even when candidate_ids is None, where the filter is redundant (the default already comes from state.options). This is harmless and sits within item 2."]}
+```

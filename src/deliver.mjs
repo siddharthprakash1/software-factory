@@ -7,6 +7,7 @@ function report(run) {
     `- Attempts: ${run.iteration}, cost: $${run.costUsd.toFixed(3)}`,
     `- Triage: ${run.triage.decision} / ${run.triage.complexity} - ${run.triage.reason}`,
     `- Review: ${run.review?.summary ?? ''}`,
+    ...(run.scopeNotes?.length ? [`- Beyond the issue, for you to judge: ${run.scopeNotes.join('; ')}`] : []),
     ...(run.uiCheck ? [`- Browser check: ${run.uiCheck.summary}`] : []),
     '',
     '## Changes',
