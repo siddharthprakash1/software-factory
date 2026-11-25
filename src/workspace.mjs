@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync, execSync } from 'node:child_process';
+import { execFileSync, execSync, spawnSync } from 'node:child_process';
+import { dockerPath, dockerArgs } from './sandbox.mjs';
 import { WORKSPACES } from './paths.mjs';
 
 export const git = (cwd, ...args) =>
@@ -52,8 +53,10 @@ export const changedFiles = (worktree, base) =>
       return { status: status[0], path: rest.at(-1) };
     });
 
-// Runs check commands in order and stops at the first failure.
-export function runChecks(cwd, commands) {
+// Runs check commands in order and stops at the first failure. With a sandbox, each command runs
+// inside the container: the tests execute code an agent just wrote.
+export function runChecks(cwd, commands, sandbox = null) {
+  if (sandbox) return runChecksInSandbox(cwd, commands, sandbox);
   let log = '';
   for (const cmd of commands) {
     try {
@@ -61,6 +64,21 @@ export function runChecks(cwd, commands) {
       log += `$ ${cmd}\n${out}\n`;
     } catch (e) {
       log += `$ ${cmd}\n${e.stdout ?? ''}${e.stderr ?? ''}\n(exit ${e.status})\n`;
+      return { ok: false, log, failed: cmd };
+    }
+  }
+  return { ok: true, log };
+}
+
+function runChecksInSandbox(cwd, commands, sandbox) {
+  const docker = dockerPath(sandbox.docker);
+  if (!docker) return { ok: false, log: 'sandbox is enabled but docker is not available\n', failed: commands[0] ?? '(sandbox)' };
+  let log = '';
+  for (const cmd of commands) {
+    const r = spawnSync(docker, dockerArgs(sandbox, cwd, ['sh', '-c', cmd]), { encoding: 'utf8', timeout: 15 * 60_000, windowsHide: true });
+    log += `$ ${cmd}   (in sandbox)\n${r.stdout ?? ''}${r.stderr ?? ''}\n`;
+    if (r.status !== 0) {
+      log += `(exit ${r.status ?? r.error?.message})\n`;
       return { ok: false, log, failed: cmd };
     }
   }

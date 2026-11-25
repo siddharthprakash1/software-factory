@@ -25,7 +25,7 @@ How to read this: the sources were read by a research agent and summarised; the 
 | 8 | **Scheduled cleanup agents** that open small refactor PRs | OpenAI, same post | Not built. The monitor only reacts to failures. |
 | 9 | **Mining the factory's own runs for friction** and filing tickets against the factory | [Factory "Signals"](https://factory.com/news/factory-signals) | **Built, in a small form.** `factory retro` counts what sent work back and has an agent propose changes with evidence. It does not file tickets or cluster across many sessions. |
 | 10 | **Replaying real past work** from its exact starting state to compare configurations | [Warp, "the factory stack"](https://www.warp.dev/blog/the-factory-stack) | **Built.** `factory replay <run-id> --variant <name>`. |
-| 11 | **A real sandbox**: filesystem and network isolation, credentials held outside | [Anthropic](https://www.anthropic.com/engineering/claude-code-sandboxing) | **Not built, and the biggest remaining gap.** A git worktree is not isolation. Docker is not installed on this machine. |
+| 11 | **A real sandbox**: filesystem and network isolation, credentials held outside | [Anthropic](https://www.anthropic.com/engineering/claude-code-sandboxing) | **Partly built.** Agents and tests run in a Docker container that sees only the worktree and gets a dedicated model token. The network is not restricted yet. |
 | 12 | **A calibrated, separate evaluator** with examples and thresholds, because agents praise their own work | [Anthropic](https://www.anthropic.com/engineering/harness-design-long-running-apps) | Partly: review is a separate agent, but uncalibrated. |
 | 13 | **Triage that reproduces the bug** before routing | Warp build guide | Not built. Triage reads code but does not run anything. |
 | 14 | Pre-warmed environments | Ramp, Stripe | Not needed at this scale. |
@@ -66,15 +66,15 @@ A second research pass looked for what changed in the last six months. Sources w
 | **One stage must not write files a later stage loads as instructions** | [CSA research note, Aug 2026](https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-coding-agent-ci-prompt-injection-202608/) | **Built**: lessons need approval; instruction files are protected |
 | **Agents leaking credentials** after reading a malicious issue | same note; [GitLost, InfoQ](https://infoq.com/news/2026/07/gitlost-github-prompt-injection) | **Built**: agents get no GitHub credentials or secret-looking variables |
 | `--max-budget-usd` per call, minimum Claude Code version | Claude Code CLI (flag confirmed locally) | **Built** |
-| Merge rate alone misleads; track reasons, revert rate, cost per merged PR | arXiv 2605.22534, 2601.15195 (abstracts) | Next |
-| Risk score plus labelled auto-merge for low-risk PRs | [Intercom](https://intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe) | Next |
-| MicroVM or container sandbox on Windows | [Docker Sandboxes](https://www.docker.com/blog/why-microvms-the-architecture-behind-docker-sandboxes/); Claude Code's own sandbox needs macOS, Linux or WSL2 ([docs](https://code.claude.com/docs/en/sandboxing)) | Next |
+| Merge rate alone misleads; track reasons, revert rate, cost per merged PR | arXiv 2605.22534, 2601.15195 (abstracts) | **Built**: `factory metrics` and the dashboard |
+| Risk score plus labelled auto-merge for low-risk PRs | [Intercom](https://intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe) | **Built**: the rating is plain code, not an agent; auto-merge is opt-in per repository |
+| MicroVM or container sandbox on Windows | [Docker Sandboxes](https://www.docker.com/blog/why-microvms-the-architecture-behind-docker-sandboxes/); Claude Code's own sandbox needs macOS, Linux or WSL2 ([docs](https://code.claude.com/docs/en/sandboxing)) | **Built** with plain Docker containers: files and credentials isolated, network open |
 
 Not adopted: paid cloud sandboxes (monthly fees), best-of-N on every run (verification cost), flaky-test auto-fixing without rerun statistics.
 
 ## What to build next, in order
 
-1. **A sandbox for agent runs.** Run each agent in a container with no network except the model API, and keep the GitHub token outside it. This matters most before the factory handles issues written by strangers.
+1. **Restrict the sandbox network** to the model API and package registries, through an allowlisting proxy container. The container itself is built.
 2. **Memory lifecycle.** Store lessons with a status and hit count; promote on repetition, retire when a person rejects work that followed one; have a curator propose changes as a pull request to `memory/`.
 3. **Proof bundle.** Attach browser-check screenshots and the review verdict to the PR as a comment.
 4. **Hidden acceptance checks on real runs.** Let a repository keep scenario tests outside the worktree that run only after review.

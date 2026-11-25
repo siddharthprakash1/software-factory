@@ -27,7 +27,35 @@ export function computeMetrics(runs = listRuns().filter((r) => !r.eval)) {
   const delivered = runs.filter((r) => DELIVERED.includes(r.status));
   const unaided = delivered.filter((r) => !r.events.some((e) => e.stage === 'human'));
   const total = runs.reduce((sum, r) => sum + r.costUsd, 0);
+  // Outcomes of pull requests that a person has decided on.
+  const decided = runs.filter((r) => r.pr && ['merged', 'closed'].includes(r.status));
+  const merged = decided.filter((r) => r.status === 'merged');
+  const reverted = merged.filter((r) => r.reverted);
+  const kinds = {};
+  for (const r of decided) {
+    const k = (kinds[r.triage?.kind ?? 'unknown'] ??= { decided: 0, merged: 0 });
+    k.decided += 1;
+    if (r.status === 'merged') k.merged += 1;
+  }
+  const hours = merged
+    .map((r) => (Date.parse(r.mergedAt) - Date.parse(r.events.find((e) => e.stage === 'deliver')?.at ?? r.startedAt)) / 3.6e6)
+    .filter((h) => Number.isFinite(h) && h >= 0)
+    .sort((a, b) => a - b);
+  const closeReasons = {};
+  for (const r of decided.filter((r) => r.status === 'closed')) {
+    const key = r.closedReason ? r.closedReason.split('\n')[0].slice(0, 80) : 'no reason given';
+    closeReasons[key] = (closeReasons[key] ?? 0) + 1;
+  }
+  const prCost = runs.filter((r) => r.pr).reduce((s, r) => s + r.costUsd, 0);
   return {
+    decided: decided.length,
+    mergeRate: decided.length ? merged.length / decided.length : null,
+    revertRate: merged.length ? reverted.length / merged.length : null,
+    reverted: reverted.length,
+    costPerMerged: merged.length ? prCost / merged.length : null,
+    medianHoursToMerge: hours.length ? hours[Math.floor(hours.length / 2)] : null,
+    kinds,
+    closeReasons,
     runs: runs.length,
     byStatus,
     stages,
@@ -52,6 +80,17 @@ export function printMetrics() {
     console.log(`Cost per delivered change: ${usd(m.costPerDelivered)}`);
     console.log(`Avg attempts per delivered change: ${m.avgAttempts.toFixed(1)}`);
     console.log(`Factory efficiency (delivered changes per $): ${m.efficiency?.toFixed(2) ?? 'n/a'}`);
+  }
+  if (m.decided) {
+    console.log(`\nPull requests decided by a person: ${m.decided}   merge rate: ${pct(m.mergeRate * m.decided, m.decided)}   reverted: ${m.reverted}${m.revertRate != null ? ` (${pct(m.reverted, m.mergeRate * m.decided)})` : ''}`);
+    if (m.costPerMerged != null) console.log(`Cost per merged PR (all PR runs' cost / merged): ${usd(m.costPerMerged)}`);
+    if (m.medianHoursToMerge != null) console.log(`Median time from PR to merge: ${m.medianHoursToMerge.toFixed(1)} h`);
+    console.log('Merge rate by kind of work:');
+    console.table(Object.fromEntries(Object.entries(m.kinds).map(([k, v]) => [k, { decided: v.decided, merged: v.merged, rate: pct(v.merged, v.decided) }])));
+    if (Object.keys(m.closeReasons).length) {
+      console.log('Why PRs were closed:');
+      for (const [reason, n] of Object.entries(m.closeReasons).sort((a, b) => b[1] - a[1])) console.log(`  ${n} x ${reason}`);
+    }
   }
   console.log('\nBy repo:');
   console.table(Object.fromEntries(Object.entries(m.repos).map(([k, r]) => [k, { runs: r.runs, delivered: r.delivered, cost: usd(r.costUsd) }])));

@@ -4,6 +4,7 @@ import { EVALS } from './paths.mjs';
 import { loadConfig } from './config.mjs';
 import { startRun, execute } from './pipeline.mjs';
 import { runChecks } from './workspace.mjs';
+import { sandboxFor } from './sandbox.mjs';
 import { saveRun, loadRun } from './runs.mjs';
 
 // Re-runs the issue of an earlier run from the same starting commit under another config variant,
@@ -53,7 +54,7 @@ export async function runEval(suiteFile, variants) {
           fs.mkdirSync(path.dirname(target), { recursive: true });
           fs.copyFileSync(path.resolve(dir, src), target);
         }
-        accepted = runChecks(run.worktree, [c.accept.cmd]).ok;
+        accepted = runChecks(run.worktree, [c.accept.cmd], sandboxFor(config)).ok;
         console.log(`[accept] ${accepted ? 'passed' : 'FAILED'}`);
       }
       run.eval.accepted = accepted;

@@ -8,6 +8,7 @@ function report(run) {
     `- Triage: ${run.triage.decision} / ${run.triage.complexity} - ${run.triage.reason}`,
     `- Review: ${run.review?.summary ?? ''}`,
     ...(run.scopeNotes?.length ? [`- Beyond the issue, for you to judge: ${run.scopeNotes.join('; ')}`] : []),
+    ...(run.risk ? [`- Risk: **${run.risk.level}**${run.risk.reasons.length ? ` (${run.risk.reasons.join('; ')})` : ' (small, first attempt, tests fail without the change, nothing flagged)'}`] : []),
     ...(run.testNote ? [`- Tests: ${run.testNote}`] : []),
     ...(run.uiCheck ? [`- Browser check: ${run.uiCheck.summary}`] : []),
     '',

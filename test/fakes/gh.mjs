@@ -42,7 +42,18 @@ if (a === 'issue' && b === 'view') {
 } else if (a === 'pr' && b === 'create') {
   out(url('pr', create('pr', { title: flag('--title'), body: stdin(), head: flag('--head'), base: flag('--base') })));
 } else if (a === 'pr' && b === 'view') {
-  out({ state: state.items[c].state });
+  const i = state.items[c];
+  out({ state: i.state, mergedAt: i.mergedAt ?? null, closedAt: i.closedAt ?? null });
+} else if (a === 'pr' && b === 'edit') {
+  (state.items[c].labels ??= []).push(flag('--add-label'));
+  save();
+} else if (a === 'pr' && b === 'merge') {
+  state.items[c].autoMerge = args.includes('--auto');
+  save();
+} else if (a === 'pr' && b === 'list') {
+  const q = flag('--search') ?? '';
+  const merged = Object.entries(state.items).filter(([, i]) => i.kind === 'pr' && i.state === 'MERGED' && q.includes(i.title.replace(/^Revert "|"$/g, '')) && i.title.startsWith('Revert "'));
+  out(merged.map(([number, i]) => ({ number: Number(number), title: i.title })));
 } else if (a === 'run' && b === 'list') {
   out(state.failedRuns ?? []);
 } else if (a === 'run' && b === 'view') {

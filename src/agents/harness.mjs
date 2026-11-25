@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, execFileSync } from 'node:child_process';
+import { sandboxFor, dockerPath, dockerArgs, sandboxLogin } from '../sandbox.mjs';
 
 // Agents never need GitHub credentials: the factory itself pushes and comments. So the agent's
 // environment drops tokens, points gh at an empty config, and clears git's credential helpers.
@@ -73,14 +74,24 @@ function checkVersion(min) {
   return versionError;
 }
 
-async function runClaude({ model, tools, write, prompt, cwd, timeoutMs, maxBudgetUsd }) {
+async function runClaude({ model, tools, write, prompt, cwd, timeoutMs, maxBudgetUsd, sandbox }) {
   const args = ['-p', '--output-format', 'json', '--model', model];
   if (maxBudgetUsd != null) args.push('--max-budget-usd', String(Math.max(0.01, Number(maxBudgetUsd.toFixed(2)))));
   if (tools?.length) args.push('--allowedTools', tools.join(','));
   if (write) args.push('--permission-mode', 'acceptEdits');
   // FACTORY_CLAUDE points at a node script that stands in for the CLI (used by the tests).
   const fake = process.env.FACTORY_CLAUDE;
-  const r = await exec(fake ? process.execPath : 'claude', fake ? [fake, ...args] : args, { cwd, input: prompt, timeoutMs });
+  let command = fake ? process.execPath : 'claude';
+  let argv = fake ? [fake, ...args] : args;
+  if (sandbox) {
+    command = dockerPath(sandbox.docker);
+    if (!command) return { ok: false, text: '', error: 'sandbox is enabled but docker is not available; start Docker Desktop or set sandbox.enabled to false', costUsd: 0 };
+    if (!sandboxLogin().length) {
+      return { ok: false, text: '', error: 'the sandbox needs its own model access: run `claude setup-token` and set CLAUDE_CODE_OAUTH_TOKEN to the token it prints (or set ANTHROPIC_API_KEY)', costUsd: 0 };
+    }
+    argv = dockerArgs(sandbox, cwd, ['claude', ...args], { login: true });
+  }
+  const r = await exec(command, argv, { cwd, input: prompt, timeoutMs });
   if (r.timedOut) return { ok: false, text: '', error: 'agent timed out', costUsd: 0 };
   let out;
   try {
@@ -117,9 +128,10 @@ export async function runAgent(config, stageDef, { model, prompt, cwd, remaining
   // A hard dollar cap on each agent call: the smaller of the per-call limit and what the run has left.
   const caps = [config.agentBudgetUsd, remainingUsd].filter((v) => v != null);
   const maxBudgetUsd = caps.length ? Math.min(...caps) : null;
-  const opts = { model, tools: stageDef.tools, write: stageDef.write, prompt, cwd, timeoutMs, maxBudgetUsd };
+  const opts = { model, tools: stageDef.tools, write: stageDef.write, prompt, cwd, timeoutMs, maxBudgetUsd, sandbox: sandboxFor(config, stageDef) };
   let result;
-  const tooOld = name === 'claude' ? checkVersion(config.minClaudeVersion) : null;
+  // In the sandbox, the container's own claude runs; its version is fixed when the image is built.
+  const tooOld = name === 'claude' && !opts.sandbox ? checkVersion(config.minClaudeVersion) : null;
   if (tooOld) result = { ok: false, text: '', error: tooOld, costUsd: 0 };
   else if (name === 'claude') result = await runClaude(opts);
   else if (config.harnesses?.[name]) result = await runCommand(config.harnesses[name], opts);

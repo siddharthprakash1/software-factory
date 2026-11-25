@@ -69,8 +69,24 @@ export function humanCommentsSince(slug, number, since, { isPr = false, trusted 
 export const createPr = (slug, { head, base, title, body, cwd }) =>
   run(['pr', 'create', '--repo', slug, '--head', head, '--base', base, '--title', title, '--body-file', '-'], { cwd, input: body });
 
-export const prState = (slug, number) =>
-  JSON.parse(gh(['pr', 'view', String(number), '--repo', slug, '--json', 'state'])).state; // OPEN | MERGED | CLOSED
+export const prState = (slug, number) => prInfo(slug, number).state; // OPEN | MERGED | CLOSED
+
+export const prInfo = (slug, number) =>
+  JSON.parse(gh(['pr', 'view', String(number), '--repo', slug, '--json', 'state,mergedAt,closedAt']));
+
+export function addLabel(slug, number, label, description) {
+  ensureLabel(slug, label, description);
+  gh(['pr', 'edit', String(number), '--repo', slug, '--add-label', label]);
+}
+
+// Turns on GitHub auto-merge: the PR merges once its required checks pass, not before.
+export const enableAutoMerge = (slug, number) => gh(['pr', 'merge', String(number), '--repo', slug, '--auto', '--squash']);
+
+// A merged PR counts as reverted when a later merged PR is GitHub's "Revert" of it.
+export function wasReverted(slug, title) {
+  const found = JSON.parse(gh(['pr', 'list', '--repo', slug, '--state', 'merged', '--search', `"Revert \"${title}\"" in:title`, '--json', 'number,title']) || '[]');
+  return found.some((p) => p.title.startsWith('Revert "'));
+}
 
 export const prNumber = (url) => Number(url.match(/\/pull\/(\d+)/)?.[1]);
 

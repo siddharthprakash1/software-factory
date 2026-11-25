@@ -1,6 +1,6 @@
 import { listRuns, saveRun, record } from './runs.mjs';
 import { startRun, execute, resume } from './pipeline.mjs';
-import { listLabeledIssues, humanCommentsSince, prState, prNumber } from './github.mjs';
+import { listLabeledIssues, humanCommentsSince, prInfo, prNumber, wasReverted } from './github.mjs';
 import { sanitize } from './issues.mjs';
 
 const WAITING = ['parked', 'awaiting_spec_approval', 'needs_human', 'ready_for_review'];
@@ -14,9 +14,17 @@ export async function pollOnce(config) {
     try {
       const pr = run.pr ? prNumber(run.pr) : null;
       if (pr) {
-        const state = prState(run.github, pr);
-        if (state !== 'OPEN') {
-          run.status = state === 'MERGED' ? 'merged' : 'closed';
+        const info = prInfo(run.github, pr);
+        if (info.state !== 'OPEN') {
+          run.status = info.state === 'MERGED' ? 'merged' : 'closed';
+          run.mergedAt = info.mergedAt ?? null;
+          run.closedAt = info.closedAt ?? info.mergedAt ?? new Date().toISOString();
+          if (run.status === 'closed') {
+            // Why it was closed is the most useful number a factory can collect. Take the last
+            // comment a trusted person left; "no reason given" is itself worth counting.
+            const said = humanCommentsSince(run.github, pr, null, { isPr: true, trusted: config.trustedAuthors }).comments.at(-1);
+            run.closedReason = said ? sanitize(said.body).slice(0, 300) : null;
+          }
           run.note = `${run.pr} was ${run.status}`;
           record(run, 'human', `pr ${run.status}`);
           acted++;
@@ -35,6 +43,20 @@ export async function pollOnce(config) {
       saveRun(run);
       await resume(config, run.id, { feedback: comments.map((c) => sanitize(c.body)).join('\n\n') });
       acted++;
+    } catch (e) {
+      console.error(`${run.id}: ${e.message}`);
+    }
+  }
+
+  // Merged changes are checked for a revert for 30 days.
+  const month = Date.now() - 30 * 24 * 3600 * 1000;
+  for (const run of listRuns().filter((r) => r.status === 'merged' && !r.reverted && r.github && Date.parse(r.mergedAt ?? 0) > month)) {
+    try {
+      if (wasReverted(run.github, run.issue.title)) {
+        run.reverted = true;
+        record(run, 'human', 'merged change was reverted');
+        acted++;
+      }
     } catch (e) {
       console.error(`${run.id}: ${e.message}`);
     }

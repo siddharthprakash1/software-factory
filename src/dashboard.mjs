@@ -60,6 +60,9 @@ ${tile(m.runs, 'runs')}
 ${tile(m.runs ? `${Math.round((m.delivered / m.runs) * 100)}%` : '–', 'delivered')}
 ${tile(m.runs ? `${Math.round((m.unaided / m.runs) * 100)}%` : '–', 'delivered without help')}
 ${tile(m.merged, 'merged')}
+${tile(m.mergeRate != null ? `${Math.round(m.mergeRate * 100)}%` : '–', 'merge rate')}
+${tile(m.revertRate != null ? `${Math.round(m.revertRate * 100)}%` : '–', 'reverted')}
+${tile(m.costPerMerged != null ? usd(m.costPerMerged) : '–', 'per merged PR')}
 ${tile(usd(m.totalCost), 'total cost')}
 ${tile(m.costPerDelivered != null ? usd(m.costPerDelivered) : '–', 'per delivered change')}
 </div>

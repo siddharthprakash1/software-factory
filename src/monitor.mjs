@@ -3,6 +3,7 @@ import path from 'node:path';
 import { INBOX } from './paths.mjs';
 import { resolveRepo } from './config.mjs';
 import { runChecks, tail } from './workspace.mjs';
+import { sandboxFor } from './sandbox.mjs';
 import { runAgent, parseJson } from './agents/harness.mjs';
 import { monitorPrompt } from './agents/prompts.mjs';
 import { failedCiRuns, listOpenIssueTitles, createIssue, ensureLabel } from './github.mjs';
@@ -18,7 +19,7 @@ export async function monitor(config, repoName, { auto = false, max = 3, signal 
 
   for (const cmd of signal ? [signal] : repo.signals ?? []) {
     console.log(`[monitor] ${cmd}`);
-    const r = runChecks(repo.path, [cmd]);
+    const r = runChecks(repo.path, [cmd], sandboxFor(config));
     if (!r.ok) signals.push(`Command \`${cmd}\` fails on the main checkout:\n${tail(r.log, 4000)}`);
   }
   if (repo.github) {

@@ -17,11 +17,11 @@ Decide one of:
 - "needs_spec": the goal is clear but the scope or design needs a written spec that a human approves first.
 - "park": the issue is ambiguous, not reproducible, or not something to act on. Say what information is missing.
 
-Also rate complexity: "low" (one obvious edit), "medium" (several files or some design), "high" (cross-cutting or risky).
+Also rate complexity: "low" (one obvious edit), "medium" (several files or some design), "high" (cross-cutting or risky), and name the kind of work: "bug", "feature", "refactor", "docs", "test" or "chore".
 
 End your answer with exactly one fenced json block:
 \`\`\`json
-{"decision": "automate|needs_spec|park", "complexity": "low|medium|high", "reason": "one or two sentences", "plan": "the files to touch and the approach, or the questions for a human"}
+{"decision": "automate|needs_spec|park", "complexity": "low|medium|high", "kind": "bug|feature|refactor|docs|test|chore", "reason": "one or two sentences", "plan": "the files to touch and the approach, or the questions for a human"}
 \`\`\``;
 
 export const specPrompt = (issue, triage) => `You are the spec agent of a software factory. You are in a checkout of the repository. Read the relevant code and write a short implementation spec for the issue below. Do not change any files; your whole answer is the spec, in markdown.

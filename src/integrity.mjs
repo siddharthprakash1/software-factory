@@ -62,7 +62,7 @@ export function guard(repo, run, protectedPaths = []) {
 
 // Fail-to-pass: put the agent's new and changed test files on the original code and run them.
 // They should fail there. If they pass, they do not show that this change did anything.
-export function failToPass(repo, run) {
+export function failToPass(repo, run, sandbox = null) {
   const tests = changedFiles(run.worktree, run.base).filter((f) => f.status !== 'D' && isTestFile(f.path)).map((f) => f.path);
   if (!tests.length) return { outcome: 'none' };
   const dir = path.join(WORKSPACES, `${run.id}--base`);
@@ -75,7 +75,7 @@ export function failToPass(repo, run) {
     }
     const quoted = tests.map((t) => (/\s/.test(t) ? `"${t}"` : t)).join(' ');
     const commands = repo.testFiles ? [repo.testFiles.replaceAll('{files}', quoted)] : repo.verify;
-    const r = runChecks(dir, commands);
+    const r = runChecks(dir, commands, sandbox);
     return { outcome: r.ok ? 'pass_on_base' : 'fail_on_base', tests, log: r.log };
   } finally {
     git(run.repo, 'worktree', 'remove', '--force', dir);

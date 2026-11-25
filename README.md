@@ -111,11 +111,39 @@ Agents under pressure to pass a check take the easy way when they can. The facto
 - **Fail-to-pass.** New and changed test files are copied onto the original code and run there. If they pass without the change, they do not show the change did anything, and the run goes back once. After that the change is delivered with a note for the reviewer and the human.
 - **No weakened tests.** Deleted test files, newly skipped tests, fewer assertions, and source code that checks whether it is running under tests all send the attempt back. Assertions that were edited are listed for the review agent.
 
+### Agents run in a sandbox
+
+Every agent, and every test command, runs in a throwaway Docker container that sees only the run's worktree. It has no access to your home folder, your files or your logins, no Linux capabilities, and limits on memory, CPU and processes. The container is deleted after each call. Its network is open, because the agent needs the model API and tests need packages.
+
+The container needs its own model access, so it never sees your login file. Create a dedicated token once and give it to the factory:
+
+```powershell
+claude setup-token
+```
+
+```powershell
+setx CLAUDE_CODE_OAUTH_TOKEN "<the token it printed>"
+```
+
+```powershell
+npm run sandbox:build
+```
+
+Set `sandbox.enabled` to `false` in `factory.config.mjs` to run agents directly on the machine instead.
+
+### Risk ratings and auto-merge
+
+Every PR gets a `risk:low`, `risk:medium` or `risk:high` label, computed in plain code, not by an agent. Low means: a low-complexity issue, delivered on the first attempt with no human steering, small, no sensitive paths (dependencies, auth, migrations, CI), a test that fails without the change, and nothing flagged by review or the test checks. The PR description lists the reasons for anything above low.
+
+A repository can opt in with `autoMerge: true`. Low-risk PRs then get GitHub auto-merge, so they merge once the repository's required checks pass, and are labelled `factory:auto-merge`. It is off by default and off for surety.
+
 ### Agents hold no keys
 
 Agents never need GitHub access; the factory itself pushes and comments. So each agent starts with GitHub tokens and other secret-looking variables removed, an empty `gh` login, and git's credential helpers switched off. Every agent call also has a hard dollar cap (`--max-budget-usd`), and agents refuse to start on a Claude Code older than 2.1.163, which fixed a data-leak bug.
 
 ### It can be measured
+
+`factory metrics` counts what happens after delivery, because "PR opened" says little. It shows the merge rate of PRs a person has decided on, the merge rate by kind of work (bug, feature, docs and so on, from triage), how many merged changes were later reverted, the cost per merged PR, the median time to merge, and why PRs were closed, taken from the last comment a collaborator left. The dashboard shows the headline numbers.
 
 `factory eval` runs a suite of issues against several configurations, each with a hidden acceptance test the agents never see. `factory replay` redoes a real past run from the same commit under a different configuration. Change a model or a prompt, and compare before you trust it.
 
@@ -246,7 +274,7 @@ test/                   offline test suite with a scripted agent and a fake GitH
 
 ## Tested without spending anything
 
-`npm test` runs the real CLI against a scripted agent and a fake GitHub: 41 tests covering the pipeline, the guards, the fail-to-pass check, lesson approval, agent credentials, comment steering, parked issues, spec approval, the monitor and replay. They need no network and no model calls, and run on Linux and Windows in CI.
+`npm test` runs the real CLI against a scripted agent and a fake GitHub: 47 tests covering the pipeline, the guards, the fail-to-pass check, lesson approval, agent credentials, risk ratings, auto-merge, merge and revert metrics, the sandbox arguments, comment steering, parked issues, spec approval, the monitor and replay. They need no network and no model calls, and run on Linux and Windows in CI.
 
 ## Where this is going
 
@@ -254,7 +282,10 @@ test/                   offline test suite with a scripted agent and a fake GitH
 
 ## Honest limits
 
-- Agents run on the machine that runs the factory, isolated only by a git worktree. They hold no GitHub credentials, but there is no sandbox yet: they can read your files and reach the network. Point it only at repositories and issues you trust.
+- The sandbox isolates files and credentials, not the network: an agent in it can still send what it reads in the worktree to any host. Point the factory only at repositories and issues you trust.
+- With the sandbox off, agents run directly on the machine, isolated only by a git worktree.
+- The browser check runs outside the sandbox.
+- Auto-merge has been tested only against the fake GitHub.
 - The two surety PRs are open, not merged. Tests pass, but no maintainer has reviewed them yet.
 - The browser check needs the Playwright MCP server available to the `claude` CLI, and has only been tried on a demo page.
 - Exercised only against the fake GitHub in the test suite, not the real one: replies to parked issues and specs, and the monitor filing issues.

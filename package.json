@@ -15,7 +15,8 @@
     "status": "node src/cli.mjs status",
     "metrics": "node src/cli.mjs metrics",
     "dashboard": "node src/cli.mjs dashboard --serve 4700",
-    "test": "node --test \"test/*.test.mjs\""
+    "test": "node --test \"test/*.test.mjs\"",
+    "sandbox:build": "docker build -t software-factory-agent sandbox"
   },
   "engines": {
     "node": ">=22"

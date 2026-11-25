@@ -17,6 +17,8 @@ export default {
   //   testFiles command that runs only some test files, with {files} where they go. The factory
   //           uses it to run new tests against the original code. Without it, verify is used.
   //   failToPass false turns that check off for a repository
+  //   autoMerge  true lets low-risk PRs merge once required checks pass (off unless set)
+  //   risk       { lines, files, paths } tunes what counts as low risk
   repos: {
     demo: {
       path: './.factory/demo-repo',
@@ -64,6 +66,16 @@ export default {
   // `factory lessons <repo> --approve`. A lessons file is instructions to every later run.
   memoryReview: true,
 
+  // Run every agent and every test command in a throwaway Docker container that sees only the
+  // run's worktree. Build the image once with `npm run sandbox:build`. Agents in the container
+  // need their own model access: run `claude setup-token` and set CLAUDE_CODE_OAUTH_TOKEN.
+  sandbox: {
+    enabled: true,
+    image: 'software-factory-agent',
+    memory: '4g',
+    cpus: 4,
+  },
+
   // Harnesses: how an agent is launched. `claude` is built in.
   // Add others as a command that reads the prompt on stdin and prints its answer:
   //   codex: { command: 'codex', args: ['exec', '--model', '{model}', '-'] }
@@ -81,7 +93,8 @@ export default {
       write: true,
     },
     review: { harness: 'claude', model: { low: 'haiku', medium: 'sonnet', high: 'sonnet' }, tools: READ },
-    verify_ui: { harness: 'claude', model: 'sonnet', tools: BROWSER },
+    // The browser check drives a browser on the host, so it runs outside the sandbox.
+    verify_ui: { harness: 'claude', model: 'sonnet', tools: BROWSER, sandbox: false },
     learn: { harness: 'claude', model: 'haiku', tools: [] },
     monitor: { harness: 'claude', model: 'sonnet', tools: READ },
     retro: { harness: 'claude', model: 'sonnet', tools: [] },

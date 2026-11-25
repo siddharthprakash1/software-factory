@@ -5,8 +5,11 @@ import { resolveRepo, resolveModel } from './config.mjs';
 import { loadIssue } from './issues.mjs';
 import { saveRun, loadRun, record, tag, writeRunFile, readRunFile } from './runs.mjs';
 import { git, tail, createWorkspace, commitAll, runChecks } from './workspace.mjs';
+import { sandboxFor } from './sandbox.mjs';
 import { guard, failToPass } from './integrity.mjs';
 import { deliver } from './deliver.mjs';
+import { assessRisk } from './risk.mjs';
+import { addLabel, enableAutoMerge, prNumber } from './github.mjs';
 import { withServer } from './ui-verify.mjs';
 import { readLessons, learn } from './memory.mjs';
 import { notify } from './notify.mjs';
@@ -134,7 +137,7 @@ const STAGES = {
   async verify(config, run) {
     const repo = repoOf(config, run);
     const started = Date.now();
-    const v = runChecks(run.worktree, repo.verify);
+    const v = runChecks(run.worktree, repo.verify, sandboxFor(config));
     run.verifyLog = v.log;
     writeRunFile(run, 'verify.log', v.log);
     record(run, 'verify', v.ok ? 'passed' : `failed: ${v.failed}`, { durationMs: Date.now() - started });
@@ -149,7 +152,7 @@ const STAGES = {
     const repo = repoOf(config, run);
     const next = repo.ui ? 'verify_ui' : 'review';
     const started = Date.now();
-    const r = failToPass(repo, run);
+    const r = failToPass(repo, run, sandboxFor(config));
     const meta = { durationMs: Date.now() - started };
     run.testNote = null;
     if (r.outcome === 'none') {
@@ -224,7 +227,20 @@ const STAGES = {
 
   async deliver(config, run) {
     const updated = !!run.pr;
+    const repo = repoOf(config, run);
+    run.risk = assessRisk(run, repo);
     deliver(run);
+    if (run.pr) {
+      const n = prNumber(run.pr);
+      addLabel(run.github, n, `risk:${run.risk.level}`, 'Risk rating from the software factory');
+      // Opt-in per repository, low risk only, and only when nobody has steered the run by hand.
+      if (repo.autoMerge && run.risk.level === 'low' && !updated) {
+        addLabel(run.github, n, 'factory:auto-merge', 'Merged by the software factory without human review');
+        enableAutoMerge(run.github, n);
+        run.autoMerge = true;
+        record(run, 'deliver', 'auto-merge enabled (low risk)');
+      }
+    }
     run.status = 'ready_for_review';
     run.note = run.pr ?? `Branch ${run.branch} is ready. Report: .factory/runs/${run.id}/report.md`;
     record(run, 'deliver', run.pr ? (updated ? 'pr updated' : 'pr opened') : 'branch ready');
