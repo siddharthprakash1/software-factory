@@ -81,6 +81,8 @@ export function world(scenario, { config = {} } = {}) {
     FACTORY_GH: path.join(ROOT, 'test', 'fakes', 'gh.mjs'),
     FAKE_SCENARIO: scenarioFile,
     FAKE_GH_STATE: ghFile,
+    GH_TOKEN: 'ghp_should_not_reach_agents',
+    FAKE_SECRET_TOKEN: 'nor_this',
   };
   const readJson = (f, fallback) => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : fallback);
 
@@ -105,6 +107,7 @@ export function world(scenario, { config = {} } = {}) {
     // Every call made to the fake agent: [{ stage, model, prompt, cwd }].
     calls: (stage) => readJson(`${scenarioFile}.calls.json`, []).filter((c) => !stage || c.stage === stage),
     memory: () => (fs.existsSync(path.join(dir, 'memory', 't.md')) ? fs.readFileSync(path.join(dir, 'memory', 't.md'), 'utf8') : null),
+    pending: () => (fs.existsSync(path.join(dir, 'memory', 't.pending.md')) ? fs.readFileSync(path.join(dir, 'memory', 't.pending.md'), 'utf8') : null),
     github: {
       state: () => readJson(ghFile),
       update(fn) {

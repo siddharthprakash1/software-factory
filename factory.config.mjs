@@ -12,7 +12,11 @@ export default {
   //   verify  commands that must pass after every implementation attempt
   //   ui      optional browser check: a start command and the URL it serves
   //   signals commands the monitor runs; a failing one becomes a proposed issue
-  //   protected path prefixes agents may not change (.github/ is always protected)
+  //   protected path prefixes agents may not change (.github/, .claude/ and agent instruction
+  //           files such as CLAUDE.md and AGENTS.md are always protected)
+  //   testFiles command that runs only some test files, with {files} where they go. The factory
+  //           uses it to run new tests against the original code. Without it, verify is used.
+  //   failToPass false turns that check off for a repository
   repos: {
     demo: {
       path: './.factory/demo-repo',
@@ -28,6 +32,7 @@ export default {
       path: './.factory/repos/surety',
       github: 'siddharthprakash1/surety',
       verify: ['uv run pytest -q'],
+      testFiles: 'uv run pytest -q {files}',
       signals: ['uv run pytest -q'],
     },
   },
@@ -47,10 +52,17 @@ export default {
   maxIterations: 3, // implement -> verify -> review attempts before asking a human
   budgetUsd: 3, // stop and ask a human once a run has spent this much
   agentTimeoutMin: 20,
+  agentBudgetUsd: 1, // hard cap on any single agent call (claude --max-budget-usd)
+
+  // Refuse to run agents on a Claude Code older than this. 2.1.163 fixed a data-exfiltration bug.
+  minClaudeVersion: '2.1.163',
 
   // Lessons from review rejections, failed checks and human feedback are kept in
   // memory/<repo>.md and given to later runs on the same repo.
   memory: true,
+  // New lessons are written to memory/<repo>.pending.md and only used once a person runs
+  // `factory lessons <repo> --approve`. A lessons file is instructions to every later run.
+  memoryReview: true,
 
   // Harnesses: how an agent is launched. `claude` is built in.
   // Add others as a command that reads the prompt on stdin and prints its answer:

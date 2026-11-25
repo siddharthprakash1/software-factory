@@ -38,7 +38,8 @@ for (const file of step.remove ?? []) {
   if (!path.isAbsolute(file) && fs.existsSync(file)) fs.unlinkSync(file);
 }
 const model = process.argv[process.argv.indexOf('--model') + 1];
-calls.push({ stage, model, prompt, cwd: process.cwd() });
+const env = Object.fromEntries(['GH_TOKEN', 'GITHUB_TOKEN', 'GH_CONFIG_DIR', 'GIT_CONFIG_KEY_0', 'FAKE_SECRET_TOKEN'].map((k) => [k, process.env[k] ?? null]));
+calls.push({ stage, model, prompt, cwd: process.cwd(), args: process.argv.slice(2), env });
 fs.writeFileSync(callsFile, JSON.stringify(calls, null, 2));
 
 process.stdout.write(

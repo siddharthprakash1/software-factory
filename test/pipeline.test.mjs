@@ -11,14 +11,14 @@ test('an issue goes from triage to a committed branch', (t) => {
   assert.equal(code, 0, out);
   const run = w.run();
   assert.equal(run.status, 'ready_for_review');
-  assert.deepEqual(w.stages(run), ['triage', 'implement', 'verify', 'review', 'deliver']);
+  assert.deepEqual(w.stages(run), ['triage', 'implement', 'verify', 'fail_to_pass', 'review', 'deliver']);
   assert.equal(run.iteration, 1);
   assert.equal(w.git(w.target, 'show', `${run.branch}:app.txt`), 'fixed');
   assert.equal(w.git(w.target, 'show', 'main:app.txt'), 'original', 'main is untouched');
   assert.ok(Math.abs(run.costUsd - 0.03) < 1e-9, 'three agent calls at 0.01 each');
 });
 
-test('a failing check sends its output back to implement, and the lesson is saved', (t) => {
+test('a failing check sends its output back to implement, and a lesson is proposed', (t) => {
   const w = world({
     ...happy,
     implement: [reply.write('still broken\n'), reply.write('fixed\n')],
@@ -29,17 +29,32 @@ test('a failing check sends its output back to implement, and the lesson is save
   const run = w.run();
   assert.equal(run.status, 'ready_for_review');
   assert.equal(run.iteration, 2);
-  assert.deepEqual(w.stages(run), ['triage', 'implement', 'verify', 'implement', 'verify', 'review', 'deliver', 'learn']);
+  assert.deepEqual(w.stages(run), ['triage', 'implement', 'verify', 'implement', 'verify', 'fail_to_pass', 'review', 'deliver', 'learn']);
   const second = w.calls('implement')[1].prompt;
   assert.match(second, /feedback_on_previous_attempt/);
   assert.match(second, /app\.txt is not fixed/);
-  assert.match(w.memory(), /Run node check\.mjs/);
+  assert.match(w.pending(), /Run node check\.mjs/);
+  assert.equal(w.memory(), null, 'proposed lessons are not used until approved');
+});
+
+test('proposed lessons reach later runs only once a person approves them', (t) => {
+  const w = world({ ...happy, implement: [reply.write('nope\n'), reply.write('fixed\n')], learn: [{ text: '- Remember the check.' }] });
+  t.after(w.cleanup);
+  w.factory('run', w.issueFile);
+  w.factory('run', w.issueFile);
+  assert.doesNotMatch(w.calls('triage').at(-1).prompt, /Remember the check/, 'not before approval');
+  assert.match(w.factory('lessons').out, /proposed[\s\S]*Remember the check/);
+  w.factory('lessons', 't', '--approve');
+  assert.equal(w.pending(), null);
+  w.factory('run', w.issueFile);
+  assert.match(w.calls('triage').at(-1).prompt, /Remember the check/);
 });
 
 test('lessons from memory reach later runs', (t) => {
   const w = world({ ...happy, implement: [reply.write('nope\n'), reply.write('fixed\n')], learn: [{ text: '- Remember the check.' }] });
   t.after(w.cleanup);
   w.factory('run', w.issueFile);
+  w.factory('lessons', 't', '--approve');
   w.factory('run', w.issueFile);
   for (const stage of ['triage', 'implement', 'review']) {
     assert.match(w.calls(stage).at(-1).prompt, /Remember the check/, `${stage} prompt carries the lesson`);
@@ -55,6 +70,7 @@ test('review comments send the change back to implement', (t) => {
   assert.equal(run.iteration, 2);
   assert.match(w.calls('implement')[1].prompt, /handle the empty case/);
   assert.equal(w.memory(), null, 'NO_CHANGE leaves memory alone');
+  assert.equal(w.pending(), null);
 });
 
 test('the reviewer is told which checks already passed', (t) => {

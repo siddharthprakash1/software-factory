@@ -62,12 +62,13 @@ Everything behind these numbers is in **[docs/proof](docs/proof/README.md)**: fu
 | **Triage** | read-only agent, cheap model | `automate`, `needs_spec` or `park`, plus a complexity rating |
 | **Spec** | read-only agent, only when needed | writes a spec, then waits for a person to approve it |
 | **Implement** | agent with edit and shell tools, in its own git worktree | model chosen by complexity; the factory commits |
-| **Guard** | plain code, no agent | blocks changes to CI config, protected paths and deleted tests |
+| **Guard** | plain code, no agent | blocks changes to CI config, agent instruction files and protected paths, and deleted, skipped or weakened tests |
 | **Verify** | your repo's test commands, no agent | failure output goes back to implement |
+| **Fail-to-pass** | plain code, no agent | runs the new tests against the original code; tests that pass there too prove nothing and go back once |
 | **Browser check** | optional; starts the app and an agent uses it in a real browser | pass, or problems that go back to implement |
 | **Review** | read-only agent that did not write the code | `approve`, or comments that go back to implement; also flags anything the issue did not ask for |
 | **Deliver** | no agent | a pull request that closes the issue |
-| **Learn** | cheap agent, after a run that received feedback | updates `memory/<repo>.md` |
+| **Learn** | cheap agent, after a run that received feedback | proposes lessons in `memory/<repo>.pending.md` for a person to approve |
 
 This is what one run looks like, from the first run on the metrics issue. The review agent rejected the first attempt, the second passed, and the lesson was saved:
 
@@ -100,6 +101,19 @@ learn      haiku   lessons updated       $0.005   10s
 ### It remembers
 
 Failed checks, review rejections and human comments are distilled into short rules in [`memory/`](memory/), one plain markdown file per repository. Later runs read them.
+
+New lessons are only proposed. `factory lessons` shows them next to the current ones, and they reach later runs only after `factory lessons <repo> --approve`. A lessons file is instructions to every later run, so a run must not be able to change it on its own: one prompt injection could otherwise steer all the runs after it.
+
+### Its tests have to mean something
+
+Agents under pressure to pass a check take the easy way when they can. The factory checks for that in plain code, not with another agent:
+
+- **Fail-to-pass.** New and changed test files are copied onto the original code and run there. If they pass without the change, they do not show the change did anything, and the run goes back once. After that the change is delivered with a note for the reviewer and the human.
+- **No weakened tests.** Deleted test files, newly skipped tests, fewer assertions, and source code that checks whether it is running under tests all send the attempt back. Assertions that were edited are listed for the review agent.
+
+### Agents hold no keys
+
+Agents never need GitHub access; the factory itself pushes and comments. So each agent starts with GitHub tokens and other secret-looking variables removed, an empty `gh` login, and git's credential helpers switched off. Every agent call also has a hard dollar cap (`--max-budget-usd`), and agents refuse to start on a Claude Code older than 2.1.163, which fixed a data-leak bug.
 
 ### It can be measured
 
@@ -177,6 +191,7 @@ The factory comments on the issue at every stop: the PR link, the spec to approv
 | `monitor [--repo <name>] [--auto]` | Check repo health and propose issues. `--auto` lets the factory pick them up itself. |
 | `eval <suite.json> [--variant a,b]` | Run a suite against named variants from the config and compare them. |
 | `replay <run-id> [--variant name]` | Redo a past run's issue from the same commit under a variant. Posts nothing to GitHub. |
+| `lessons [repo] [--approve|--reject]` | Show proposed lessons next to the current ones, or approve or reject them. |
 | `retro [--last <n>]` | Count what sent work back across recent runs, and have an agent propose changes to the factory itself. |
 | `status [run-id]` | List runs, or show one run's step-by-step log. |
 | `metrics` | Delivery rate, cost per delivered change, cost by stage and repo. |
@@ -193,7 +208,8 @@ Everything that shapes behaviour is in one file, [`factory.config.mjs`](factory.
 
 ```
 factory.config.mjs      repos, limits, stages, eval variants
-memory/<repo>.md        lessons learned per repository
+memory/<repo>.md        lessons learned per repository (approved)
+memory/<repo>.pending.md  proposed lessons waiting for a person
 src/
   cli.mjs               command-line entry point
   pipeline.mjs          the stages, the loop, resume
@@ -202,7 +218,8 @@ src/
   poll.mjs              GitHub trigger and comment steering
   github.mjs            issues, comments, labels, PRs through gh
   notify.mjs            reports run outcomes on the issue and PR
-  memory.mjs            reads and updates lessons
+  memory.mjs            reads, proposes and approves lessons
+  integrity.mjs         test guards and the fail-to-pass check
   monitor.mjs           health signals -> proposed issues
   retro.mjs             friction in the factory's own runs -> proposed changes
   evals.mjs             suites, variants, acceptance checks
@@ -229,7 +246,7 @@ test/                   offline test suite with a scripted agent and a fake GitH
 
 ## Tested without spending anything
 
-`npm test` runs the real CLI against a scripted agent and a fake GitHub: 33 tests covering the pipeline, the guards, comment steering, parked issues, spec approval, the monitor and replay. They need no network and no model calls, and run on Linux and Windows in CI.
+`npm test` runs the real CLI against a scripted agent and a fake GitHub: 41 tests covering the pipeline, the guards, the fail-to-pass check, lesson approval, agent credentials, comment steering, parked issues, spec approval, the monitor and replay. They need no network and no model calls, and run on Linux and Windows in CI.
 
 ## Where this is going
 
@@ -237,7 +254,7 @@ test/                   offline test suite with a scripted agent and a fake GitH
 
 ## Honest limits
 
-- Agents run on the machine that runs the factory, isolated only by a git worktree. There is no sandbox, so point it only at repositories and issues you trust.
+- Agents run on the machine that runs the factory, isolated only by a git worktree. They hold no GitHub credentials, but there is no sandbox yet: they can read your files and reach the network. Point it only at repositories and issues you trust.
 - The two surety PRs are open, not merged. Tests pass, but no maintainer has reviewed them yet.
 - The browser check needs the Playwright MCP server available to the `claude` CLI, and has only been tried on a demo page.
 - Exercised only against the fake GitHub in the test suite, not the real one: replies to parked issues and specs, and the monitor filing issues.

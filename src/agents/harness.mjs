@@ -1,13 +1,36 @@
-import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawn, execFileSync } from 'node:child_process';
+
+// Agents never need GitHub credentials: the factory itself pushes and comments. So the agent's
+// environment drops tokens, points gh at an empty config, and clears git's credential helpers.
+// An agent tricked by an issue into "git push" or "gh api" then has nothing to authenticate with.
+const EMPTY_GH = path.join(os.tmpdir(), 'software-factory-empty-gh');
+const SECRET = /TOKEN|SECRET|PASSWORD|API_KEY|PRIVATE_KEY|CREDENTIAL/i;
+const KEEP = new Set(['ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN']); // the agent's own model access
+export function agentEnv(base = process.env) {
+  const env = {};
+  for (const [k, v] of Object.entries(base)) if (KEEP.has(k) || !SECRET.test(k)) env[k] = v;
+  // Let a nested agent start cleanly when the factory itself is launched from an agent session.
+  delete env.CLAUDECODE;
+  delete env.CLAUDE_CODE_ENTRYPOINT;
+  fs.mkdirSync(EMPTY_GH, { recursive: true });
+  return {
+    ...env,
+    GH_CONFIG_DIR: EMPTY_GH,
+    GIT_TERMINAL_PROMPT: '0',
+    GCM_INTERACTIVE: 'never',
+    GIT_CONFIG_COUNT: '1',
+    GIT_CONFIG_KEY_0: 'credential.helper',
+    GIT_CONFIG_VALUE_0: '',
+  };
+}
 
 // Runs a process, feeds `input` on stdin, resolves with stdout/stderr/exit code.
 function exec(command, args, { cwd, input, timeoutMs }) {
   return new Promise((resolve) => {
-    const env = { ...process.env };
-    // Let a nested agent start cleanly when the factory itself is launched from an agent session.
-    delete env.CLAUDECODE;
-    delete env.CLAUDE_CODE_ENTRYPOINT;
-    const child = spawn(command, args, { cwd, env, windowsHide: true });
+    const child = spawn(command, args, { cwd, env: agentEnv(), windowsHide: true });
     let stdout = '';
     let stderr = '';
     let timedOut = false;
@@ -30,8 +53,29 @@ function exec(command, args, { cwd, input, timeoutMs }) {
   });
 }
 
-async function runClaude({ model, tools, write, prompt, cwd, timeoutMs }) {
+// Older Claude Code versions have known prompt-injection fixes missing (for example 2.1.163).
+const newer = (a, b) => {
+  const x = a.split('.').map(Number), y = b.split('.').map(Number);
+  for (let i = 0; i < 3; i++) if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) > (y[i] ?? 0);
+  return true;
+};
+let versionError;
+function checkVersion(min) {
+  if (!min || process.env.FACTORY_CLAUDE) return null;
+  if (versionError === undefined) {
+    try {
+      const v = execFileSync('claude', ['--version'], { encoding: 'utf8', shell: process.platform === 'win32' }).match(/\d+\.\d+\.\d+/)?.[0];
+      versionError = v && newer(v, min) ? null : `Claude Code ${v ?? '(unknown version)'} is older than the minimum ${min}; update it with: claude update`;
+    } catch (e) {
+      versionError = `could not run claude --version: ${e.message}`;
+    }
+  }
+  return versionError;
+}
+
+async function runClaude({ model, tools, write, prompt, cwd, timeoutMs, maxBudgetUsd }) {
   const args = ['-p', '--output-format', 'json', '--model', model];
+  if (maxBudgetUsd != null) args.push('--max-budget-usd', String(Math.max(0.01, Number(maxBudgetUsd.toFixed(2)))));
   if (tools?.length) args.push('--allowedTools', tools.join(','));
   if (write) args.push('--permission-mode', 'acceptEdits');
   // FACTORY_CLAUDE points at a node script that stands in for the CLI (used by the tests).
@@ -66,13 +110,18 @@ async function runCommand(def, { model, prompt, cwd, timeoutMs }) {
   return { ok, text: r.stdout, error: ok ? null : r.stderr || `exit ${r.code}`, costUsd: 0 };
 }
 
-export async function runAgent(config, stageDef, { model, prompt, cwd }) {
+export async function runAgent(config, stageDef, { model, prompt, cwd, remainingUsd }) {
   const timeoutMs = (config.agentTimeoutMin ?? 20) * 60_000;
   const started = Date.now();
   const name = stageDef.harness ?? 'claude';
-  const opts = { model, tools: stageDef.tools, write: stageDef.write, prompt, cwd, timeoutMs };
+  // A hard dollar cap on each agent call: the smaller of the per-call limit and what the run has left.
+  const caps = [config.agentBudgetUsd, remainingUsd].filter((v) => v != null);
+  const maxBudgetUsd = caps.length ? Math.min(...caps) : null;
+  const opts = { model, tools: stageDef.tools, write: stageDef.write, prompt, cwd, timeoutMs, maxBudgetUsd };
   let result;
-  if (name === 'claude') result = await runClaude(opts);
+  const tooOld = name === 'claude' ? checkVersion(config.minClaudeVersion) : null;
+  if (tooOld) result = { ok: false, text: '', error: tooOld, costUsd: 0 };
+  else if (name === 'claude') result = await runClaude(opts);
   else if (config.harnesses?.[name]) result = await runCommand(config.harnesses[name], opts);
   else result = { ok: false, text: '', error: `unknown harness "${name}"`, costUsd: 0 };
   return { ...result, harness: name, model, durationMs: Date.now() - started };

@@ -18,9 +18,9 @@ How to read this: the sources were read by a research agent and summarised; the 
 | 1 | **Only people with write access can trigger or steer; hidden text is stripped** | [GitHub Copilot agent](https://docs.github.com/en/copilot/concepts/agents/coding-agent/risks-and-mitigations), [claude-code-action](https://github.com/anthropics/claude-code-action/blob/main/docs/security.md), [Willison's "lethal trifecta"](https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/) | **Built.** Comments from non-collaborators are ignored; HTML comments and invisible characters are removed from issue and comment text. |
 | 2 | **A judge that compares the diff with the task** and vetoes work that goes beyond it | [Spotify](https://engineering.atspotify.com/2025/12/feedback-loops-background-coding-agents-part-3) (vetoes about a quarter of sessions), [Warp](https://www.warp.dev/blog/software-factory-build-guide) | **Built**, inside the review stage: it lists out-of-scope changes, which send the run back once; whatever remains after that goes to the human reviewer in the report. (Sending back every time made an approved change use up all its attempts on a real run.) A separate judge call would be closer to Spotify's design. |
 | 3 | **Deterministic steps and a hard retry cap** | [Stripe "Minions"](https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents-part-2): only implement and fix-CI are agents; two CI rounds, then a human | **Had it.** Verify, guard and deliver are plain code; 3 attempts and a budget, then a person. |
-| 4 | **Tests the agent cannot game** | [StrongDM](https://factory.strongdm.ai/) keeps scenarios outside the repo; [Anthropic](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) forbids editing tests | **Partly built.** A guard now blocks changes to CI config and protected paths, and deleted test files. Hidden acceptance tests exist only in evals, not on real runs. |
+| 4 | **Tests the agent cannot game** | [StrongDM](https://factory.strongdm.ai/) keeps scenarios outside the repo; [Anthropic](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) forbids editing tests | **Mostly built.** The guard blocks changes to CI config, agent instruction files and protected paths, and deleted or skipped tests, lost assertions, and code that detects the test environment. A fail-to-pass check runs new tests against the original code. Hidden acceptance tests exist only in evals, not on real runs. |
 | 5 | **Proof of work attached to the PR** | [Warp](https://www.warp.dev/blog/software-factory-build-guide), [Ramp](https://engineering.ramp.com/post/why-we-built-our-background-agent) (before/after screenshots), [OpenAI](https://openai.com/index/harness-engineering/) (video of bug and fix) | **Partly built.** PRs carry the test output and now the full run log. Screenshots from the browser check are saved locally but not attached. |
-| 6 | **Memory with a lifecycle**: candidate rules get promoted on repeated signal and retired on negative signal | [Cursor Bugbot](https://cursor.com/blog/bugbot-learning) | **Not built.** The learn stage rewrites a capped list each time, which is a weak form of curation. |
+| 6 | **Memory with a lifecycle**: candidate rules get promoted on repeated signal and retired on negative signal | [Cursor Bugbot](https://cursor.com/blog/bugbot-learning) | **Partly built.** New lessons are proposed in a pending file and a person approves them (`factory lessons`). No automatic promotion or retirement. |
 | 7 | **Lessons become linters**, and the agent's instruction file stays a short map | [OpenAI harness engineering](https://openai.com/index/harness-engineering/) | Not built. |
 | 8 | **Scheduled cleanup agents** that open small refactor PRs | OpenAI, same post | Not built. The monitor only reacts to failures. |
 | 9 | **Mining the factory's own runs for friction** and filing tickets against the factory | [Factory "Signals"](https://factory.com/news/factory-signals) | **Built, in a small form.** `factory retro` counts what sent work back and has an agent propose changes with evidence. It does not file tickets or cluster across many sessions. |
@@ -54,6 +54,23 @@ One more finding that applies directly: `claude -p` runs a target repository's o
 - Harrison Chase's "How to build a knowledge factory" (X article, login wall).
 - Steve Yegge's "Welcome to Gas Town" (blocked); claims about it come from search snippets.
 - The talk titles from the AI Engineer World's Fair software-factories track.
+
+## Second round of research (25 November 2026)
+
+A second research pass looked for what changed in the last six months. Sources were read by a research agent; items marked "snippet" were seen only in search results.
+
+| Finding | Source | Status here |
+|---|---|---|
+| **Fail-to-pass**: new tests must fail on the original code | [AIEWF 2026 talk](https://ai.engineer/talks/harness-engineering-is-not-enough-why-software-factories-fail); Google agentic bug reproduction (arXiv 2502.01821, snippet) | **Built** |
+| **Reward hacking** shows up as edited assertions, special-cased test inputs, skipped tests | ImpossibleBench, Hodoscope (arXiv 2604.11072), snippets | **Built** as guard rules |
+| **One stage must not write files a later stage loads as instructions** | [CSA research note, Aug 2026](https://labs.cloudsecurityalliance.org/research/csa-research-note-ai-coding-agent-ci-prompt-injection-202608/) | **Built**: lessons need approval; instruction files are protected |
+| **Agents leaking credentials** after reading a malicious issue | same note; [GitLost, InfoQ](https://infoq.com/news/2026/07/gitlost-github-prompt-injection) | **Built**: agents get no GitHub credentials or secret-looking variables |
+| `--max-budget-usd` per call, minimum Claude Code version | Claude Code CLI (flag confirmed locally) | **Built** |
+| Merge rate alone misleads; track reasons, revert rate, cost per merged PR | arXiv 2605.22534, 2601.15195 (abstracts) | Next |
+| Risk score plus labelled auto-merge for low-risk PRs | [Intercom](https://intercom.com/blog/ai-is-approving-our-pull-requests-heres-how-we-made-it-safe) | Next |
+| MicroVM or container sandbox on Windows | [Docker Sandboxes](https://www.docker.com/blog/why-microvms-the-architecture-behind-docker-sandboxes/); Claude Code's own sandbox needs macOS, Linux or WSL2 ([docs](https://code.claude.com/docs/en/sandboxing)) | Next |
+
+Not adopted: paid cloud sandboxes (monthly fees), best-of-N on every run (verification cost), flaky-test auto-fixing without rerun statistics.
 
 ## What to build next, in order
 

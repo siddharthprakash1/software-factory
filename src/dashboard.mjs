@@ -72,7 +72,7 @@ ${Object.entries(m.stages).filter(([, s]) => s.costUsd > 0).sort((a, b) => b[1].
 ${Object.entries(m.repos).map(([k, r]) => `<tr><td>${esc(k)}</td><td class="n">${r.runs}</td><td class="n">${r.delivered}</td><td class="n">${usd(r.costUsd)}</td></tr>`).join('')}
 </table></div></div></div>
 <h2>All runs</h2><div class="wrap"><table>${head}${runs.map(runRow).join('')}</table></div>
-${lessons.length ? `<h2>Lessons learned</h2><div class="cols">${lessons.map((f) => `<div class="card"><b>${esc(f.replace(/\.md$/, ''))}</b><pre>${esc(fs.readFileSync(path.join(MEMORY, f), 'utf8'))}</pre></div>`).join('')}</div>` : ''}
+${lessons.length ? `<h2>Lessons learned</h2><div class="cols">${lessons.map((f) => `<div class="card"><b>${esc(f.endsWith('.pending.md') ? f.replace(/\.pending\.md$/, '') + ' (proposed, not yet approved)' : f.replace(/\.md$/, ''))}</b><pre>${esc(fs.readFileSync(path.join(MEMORY, f), 'utf8'))}</pre></div>`).join('')}</div>` : ''}
 </main></body></html>`;
 }
 

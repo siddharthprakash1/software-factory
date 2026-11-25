@@ -4,7 +4,8 @@ import { runDir } from './paths.mjs';
 import { resolveRepo, resolveModel } from './config.mjs';
 import { loadIssue } from './issues.mjs';
 import { saveRun, loadRun, record, tag, writeRunFile, readRunFile } from './runs.mjs';
-import { git, tail, createWorkspace, commitAll, runChecks, changedFiles } from './workspace.mjs';
+import { git, tail, createWorkspace, commitAll, runChecks } from './workspace.mjs';
+import { guard, failToPass } from './integrity.mjs';
 import { deliver } from './deliver.mjs';
 import { withServer } from './ui-verify.mjs';
 import { readLessons, learn } from './memory.mjs';
@@ -49,20 +50,6 @@ export function startRun(config, issueRef, { repo, path: checkout, pr, tags, iss
   return run;
 }
 
-// Deterministic limits on what an agent may change, checked on the whole branch after each attempt.
-// Agents fix a failing check the easy way when they can: by editing CI or deleting the test.
-const PROTECTED = ['.github/'];
-function guard(repo, run) {
-  const prefixes = [...PROTECTED, ...(repo.protected ?? [])];
-  const out = [];
-  for (const f of changedFiles(run.worktree, run.base)) {
-    const hit = prefixes.find((p) => f.path === p || f.path.startsWith(p));
-    if (hit) out.push(`${f.path} is under the protected path ${hit}`);
-    else if (f.status === 'D' && /(^|[/_.-])tests?([/_.-]|$)|\.spec\./i.test(f.path)) out.push(`${f.path} is a test file and was deleted`);
-  }
-  return out;
-}
-
 function setFeedback(run, source, text) {
   run.feedback = text;
   (run.feedbackLog ??= []).push({ source, text: tail(text, 1500) });
@@ -74,7 +61,7 @@ async function agent(config, run, stage, prompt) {
   const def = config.stages[stage];
   const model = resolveModel(def, run.triage?.complexity);
   console.log(`${tag(run)}[${stage}:${model}] running...`);
-  const r = await runAgent(config, def, { model, prompt, cwd: run.worktree });
+  const r = await runAgent(config, def, { model, prompt, cwd: run.worktree, remainingUsd: run.budgetUsd - run.costUsd });
   run.costUsd += r.costUsd;
   const n = String(run.events.length + 1).padStart(2, '0');
   writeRunFile(run, `${n}-${stage}.md`, r.text || r.error || '');
@@ -134,10 +121,11 @@ const STAGES = {
       setFeedback(run, 'factory', 'You finished without changing any files. Make the change the issue asks for.');
       return 'implement';
     }
-    const violations = guard(repoOf(config, run), run);
-    if (violations.length) {
-      record(run, 'guard', `blocked: ${violations.length} protected change(s)`);
-      setFeedback(run, 'guard', `The factory does not allow these changes. Undo them and solve the issue another way:\n- ${violations.join('\n- ')}`);
+    const { problems, editedAssertions } = guard(repoOf(config, run), run);
+    run.editedAssertions = editedAssertions;
+    if (problems.length) {
+      record(run, 'guard', `blocked: ${problems.length} problem(s)`);
+      setFeedback(run, 'guard', `The factory does not allow these changes. Undo them and solve the issue another way:\n- ${problems.join('\n- ')}`);
       return 'implement';
     }
     return 'verify';
@@ -150,8 +138,37 @@ const STAGES = {
     run.verifyLog = v.log;
     writeRunFile(run, 'verify.log', v.log);
     record(run, 'verify', v.ok ? 'passed' : `failed: ${v.failed}`, { durationMs: Date.now() - started });
-    if (v.ok) return repo.ui ? 'verify_ui' : 'review';
+    if (v.ok) return repo.failToPass === false ? (repo.ui ? 'verify_ui' : 'review') : 'fail_to_pass';
     setFeedback(run, 'checks', `The check \`${v.failed}\` failed:\n${tail(v.log, 4000)}`);
+    return 'implement';
+  },
+
+  // The tests the agent added or changed must fail on the original code, or they prove nothing.
+  // Sent back once; after that the change goes on and the reviewer and the human are told.
+  async fail_to_pass(config, run) {
+    const repo = repoOf(config, run);
+    const next = repo.ui ? 'verify_ui' : 'review';
+    const started = Date.now();
+    const r = failToPass(repo, run);
+    const meta = { durationMs: Date.now() - started };
+    run.testNote = null;
+    if (r.outcome === 'none') {
+      record(run, 'fail_to_pass', 'no tests added or changed', meta);
+      run.testNote = 'No tests were added or changed.';
+      return next;
+    }
+    writeRunFile(run, 'fail-to-pass.log', r.log);
+    if (r.outcome === 'fail_on_base') {
+      record(run, 'fail_to_pass', 'new tests fail on the original code', meta);
+      return next;
+    }
+    record(run, 'fail_to_pass', 'new tests pass on the original code', meta);
+    if (run.testsSentBack) {
+      run.testNote = `The new or changed tests (${r.tests.join(', ')}) also pass on the original code, so they do not show that this change fixes anything.`;
+      return next;
+    }
+    run.testsSentBack = true;
+    setFeedback(run, 'fail-to-pass check', `The factory ran your new and changed test files (${r.tests.join(', ')}) against the original code, before your change, and they passed there too. So they do not show that your change does anything. Add or change a test that fails without your change and passes with it.`);
     return 'implement';
   },
 
@@ -183,7 +200,7 @@ const STAGES = {
   async review(config, run) {
     const diff = tail(git(run.worktree, 'diff', `${run.base}..HEAD`), 60_000);
     const lessons = readLessons(config, run.repoName);
-    const { text, meta } = await agent(config, run, 'review', reviewPrompt(run.issue, diff, { lessons, verify: repoOf(config, run).verify }));
+    const { text, meta } = await agent(config, run, 'review', reviewPrompt(run.issue, diff, { lessons, verify: repoOf(config, run).verify, testNote: run.testNote, editedAssertions: run.editedAssertions }));
     const r = parseJson(text);
     if (!r?.verdict) {
       record(run, 'review', 'unparseable', meta);
@@ -274,6 +291,7 @@ export async function resume(config, id, { feedback } = {}) {
   }
   run.next = RESUME_FROM[run.status] ?? run.next;
   run.scopeSentBack = false;
+  run.testsSentBack = false;
   run.iteration = run.status === 'awaiting_spec_approval' ? run.iteration : 0;
   if (run.costUsd >= run.budgetUsd) run.budgetUsd += config.budgetUsd;
   record(run, 'human', feedback ? 'resumed with guidance' : 'resumed');

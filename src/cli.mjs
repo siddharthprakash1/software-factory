@@ -8,6 +8,7 @@ import { monitor } from './monitor.mjs';
 import { runEval, replay } from './evals.mjs';
 import { dashboard } from './dashboard.mjs';
 import { retro } from './retro.mjs';
+import { readLessons, readPending, pendingRepos, approveLessons, rejectLessons } from './memory.mjs';
 
 const USAGE = `Software factory
 
@@ -21,13 +22,14 @@ const USAGE = `Software factory
   replay <run-id> [--variant name]   redo a past run's issue from the same commit under a variant
   status [run-id]                    list runs, or show one run's event log
   retro [--last <n>]                 where the factory itself loses time, and what to change
+  lessons [repo] [--approve|--reject] show proposed lessons, or approve or reject them
   metrics                            totals across runs
   dashboard [--serve <port>]         write .factory/dashboard.html, optionally serve it live
 
 Run it as: npm run factory -- <command>
 `;
 
-const BOOLEAN = new Set(['pr', 'auto']);
+const BOOLEAN = new Set(['pr', 'auto', 'approve', 'reject']);
 
 function parseArgs(argv) {
   const flags = {};
@@ -83,6 +85,21 @@ try {
     listRuns().filter((r) => !r.eval).forEach(printSummary);
   } else if (cmd === 'retro') {
     await retro(config, { last: flags.last ? Number(flags.last) : 30 });
+  } else if (cmd === 'lessons') {
+    const repos = args[0] ? [args[0]] : pendingRepos();
+    if (!repos.length) console.log('No proposed lessons are waiting.');
+    for (const repo of repos) {
+      if (flags.approve) {
+        approveLessons(repo);
+        console.log(`Approved: later runs on ${repo} now read the new lessons.`);
+      } else if (flags.reject) {
+        rejectLessons(repo);
+        console.log(`Rejected: the proposed lessons for ${repo} were discarded.`);
+      } else {
+        console.log(`\n== ${repo}: current\n${readLessons({ memory: true }, repo) || '(none)'}\n\n== ${repo}: proposed\n${readPending(repo) || '(none)'}\n`);
+        console.log(`Approve with: npm run factory -- lessons ${repo} --approve   (or --reject)`);
+      }
+    }
   } else if (cmd === 'metrics') {
     printMetrics();
   } else if (cmd === 'dashboard') {
