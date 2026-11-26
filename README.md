@@ -55,7 +55,7 @@ These are the second runs of both issues: the repository was recreated in betwee
 
 ### A full run in the sandbox, on Haiku, for under a cent
 
-On 26 November 2026 the factory took [surety#5](https://github.com/siddharthprakash1/surety/issues/5) to [surety#6](https://github.com/siddharthprakash1/surety/pull/6) in 2 minutes 38 seconds, with every agent and every test running in the Docker sandbox and Haiku for every step (`--variant cheapest`). Three agent calls used **$0.007** at list prices, drawn from a Claude plan. The new tests failed on the original code (`2 failed`) and passed with the change (`185 passed`), so the PR was rated `risk:low`. The owner reviewed it and merged it.
+On 26 November 2026 the factory took [surety#5](https://github.com/siddharthprakash1/surety/issues/5) to [surety#6](https://github.com/siddharthprakash1/surety/pull/6) in 2 minutes 38 seconds, with every agent and every test running in the Docker sandbox and Haiku for every step (`--variant cheapest`). Three agent calls used **$0.007** at list prices, drawn from a Claude plan. The new tests failed on the original code (`2 failed`) and passed with the change (`185 passed`), so the PR was rated `risk:low`. It was then merged on the owner's say-so.
 
 <div align="center">
 <a href="docs/proof/live-run/live-run.mp4"><img src="docs/proof/live-run/live-run.gif" alt="Replay of the run's terminal log with elapsed time and running cost, then the dashboard and the pull request on GitHub" width="85%"></a>

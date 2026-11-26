@@ -116,7 +116,7 @@ On 26 November 2026 the factory ran issue [surety#5](https://github.com/siddhart
 
 Each Haiku call read 43,000 to 66,000 tokens, mostly from cache, which is why the calls are so cheap.
 
-The repository owner read the diff and squash-merged the PR on 26 November 2026 ([`6fecbda`](https://github.com/siddharthprakash1/surety/commit/6fecbdaf7a98204506538a7b82f8d82ba15e63f1)), which closed the issue. It is the first factory PR merged on surety, and the factory recorded the merge on its next poll.
+On the repository owner's instruction, the PR was squash-merged on 26 November 2026 ([`6fecbda`](https://github.com/siddharthprakash1/surety/commit/6fecbdaf7a98204506538a7b82f8d82ba15e63f1)), which closed the issue. It is the first factory PR merged on surety, and the factory recorded the merge on its next poll.
 
 ![The live-run video: terminal replay, dashboard, pull request](live-run/live-run.gif)
 
