@@ -105,5 +105,18 @@ export default {
     default: {},
     'review-sonnet': { stages: { review: { model: 'sonnet' } } },
     'all-haiku': { stages: { implement: { model: 'haiku' }, review: { model: 'haiku' } } },
+    // The least plan usage a run can take: Haiku everywhere, two attempts at most, a small
+    // budget per call and per run, and no lessons step.
+    cheapest: {
+      maxIterations: 2,
+      budgetUsd: 1,
+      agentBudgetUsd: 0.4,
+      memory: false,
+      stages: {
+        spec: { model: 'haiku' },
+        implement: { model: 'haiku' },
+        review: { model: 'haiku' },
+      },
+    },
   },
 };

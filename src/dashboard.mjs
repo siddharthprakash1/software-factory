@@ -6,7 +6,8 @@ import { listRuns } from './runs.mjs';
 import { computeMetrics, WAITING } from './metrics.mjs';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const usd = (n) => `$${n.toFixed(2)}`;
+// Small runs cost fractions of a cent, so show three decimals below a dollar.
+const usd = (n) => `$${n.toFixed(Math.abs(n) < 1 ? 3 : 2)}`;
 const LABEL = {
   running: 'Running',
   parked: 'Parked',
@@ -47,14 +48,19 @@ export function renderDashboard() {
   const runs = all.filter((r) => !r.eval).reverse();
   const m = computeMetrics();
   const waiting = runs.filter((r) => WAITING.includes(r.status));
+  const running = runs.filter((r) => r.status === 'running');
+  // Each running run, step by step: which model each agent call used and what it cost so far.
+  const step = (e) => `<tr><td>${esc(e.stage)}</td><td>${esc(e.model ?? '')}</td><td>${esc(e.outcome)}</td><td class="n">${e.costUsd != null ? usd(e.costUsd) : ''}</td><td class="n">${e.durationMs != null ? Math.round(e.durationMs / 1000) + ' s' : ''}</td></tr>`;
+  const live = (r) => `<div class="card" style="margin-bottom:12px"><b>${esc(r.issue.title)}</b> <span class="muted">· ${esc(r.repoName ?? '')} · attempt ${r.iteration} · ${usd(r.costUsd)} so far · started ${new Date(r.startedAt).toLocaleTimeString()}</span>
+<div class="wrap" style="margin-top:10px"><table><tr><th>Step</th><th>Model</th><th>Outcome</th><th class="n">Cost</th><th class="n">Time</th></tr>${r.events.map(step).join('')}<tr><td colspan="5" class="info">working on the next step…</td></tr></table></div></div>`;
   const maxStage = Math.max(...Object.values(m.stages).map((s) => s.costUsd), 0.0001);
   const lessons = fs.existsSync(MEMORY) ? fs.readdirSync(MEMORY).filter((f) => f.endsWith('.md')) : [];
   const tile = (value, label) => `<div class="tile"><b>${value}</b><span>${label}</span></div>`;
   const head = '<tr><th>Status</th><th>Repo</th><th>Issue</th><th class="n">Attempts</th><th class="n">Cost</th><th class="n">Minutes</th></tr>';
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="15"><title>Software factory</title><style>${CSS}</style></head><body><main>
-<h1>Software factory</h1><p class="sub">${m.runs} runs · updated ${new Date().toLocaleTimeString()} · refreshes every 15 s${all.length - runs.length ? ` · ${all.length - runs.length} eval runs not shown` : ''}</p>
+<meta http-equiv="refresh" content="${running.length ? 5 : 15}"><title>Software factory</title><style>${CSS}</style></head><body><main>
+<h1>Software factory</h1><p class="sub">${m.runs} runs · updated ${new Date().toLocaleTimeString()} · refreshes every ${running.length ? 5 : 15} s${all.length - runs.length ? ` · ${all.length - runs.length} eval runs not shown` : ''}</p>
 <div class="tiles">
 ${tile(m.runs, 'runs')}
 ${tile(m.runs ? `${Math.round((m.delivered / m.runs) * 100)}%` : '–', 'delivered')}
@@ -66,6 +72,7 @@ ${tile(m.costPerMerged != null ? usd(m.costPerMerged) : '–', 'per merged PR')}
 ${tile(usd(m.totalCost), 'total cost')}
 ${tile(m.costPerDelivered != null ? usd(m.costPerDelivered) : '–', 'per delivered change')}
 </div>
+${running.length ? `<h2>Running now (${running.length})</h2>${running.map(live).join('')}` : ''}
 <h2>Waiting on a person (${waiting.length})</h2>
 ${waiting.length ? `<div class="wrap"><table>${head}${waiting.map(runRow).join('')}</table></div>` : '<div class="card muted">Nothing is waiting.</div>'}
 <div class="cols"><div><h2>Cost by stage</h2><div class="wrap"><table><tr><th>Stage</th><th class="n">Calls</th><th class="n">Cost</th><th style="width:40%"></th></tr>

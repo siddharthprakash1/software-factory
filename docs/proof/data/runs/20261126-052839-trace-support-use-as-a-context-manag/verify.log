@@ -1,0 +1,11 @@
+$ uv run pytest -q   (in sandbox)
+........................................................................ [ 38%]
+........................................................................ [ 77%]
+.........................................                                [100%]
+185 passed, 1 skipped in 16.96s
+Downloading cpython-3.12.16-linux-x86_64-gnu (download) (33.1MiB)
+ Downloaded cpython-3.12.16-linux-x86_64-gnu (download)
+Using CPython 3.12.16
+Creating virtual environment at: /home/node/venv
+Installed 25 packages in 8.69s
+

@@ -100,6 +100,37 @@ A test in a scratch copy of the demo repo was broken on purpose. The monitor ran
 
 ![Dashboard after these runs](images/dashboard.jpg)
 
+## 8. A full run in the Docker sandbox, on Haiku only
+
+On 26 November 2026 the factory ran issue [surety#5](https://github.com/siddharthprakash1/surety/issues/5) ("Trace: support use as a context manager") with the sandbox on and the `cheapest` variant: Haiku for every agent step, at most 2 attempts, $0.40 per agent call, $1 per run, and no lessons step.
+
+| Step | Where | Model | Result | List-price usage | Time |
+|---|---|---|---|---|---|
+| triage | sandbox | Haiku | automate, low complexity | $0.0023 | 10 s |
+| implement | sandbox | Haiku | 1 commit, 2 files, +29 lines | $0.0025 | 58 s |
+| verify | sandbox | – | `185 passed, 1 skipped` | – | 41 s |
+| fail to pass | sandbox | – | new tests on the original code: `2 failed, 1 passed` | – | 28 s |
+| review | sandbox | Haiku | approve | $0.0021 | 10 s |
+| deliver | host | – | [surety#6](https://github.com/siddharthprakash1/surety/pull/6), labelled `risk:low` | – | – |
+| **Total** | | | | **$0.007** | **2 min 38 s** |
+
+Each Haiku call read 43,000 to 66,000 tokens, mostly from cache, which is why the calls are so cheap.
+
+![The live-run video: terminal replay, dashboard, pull request](live-run/live-run.gif)
+
+The terminal part of the video is a replay rendered from the saved log ([`live-run/terminal.log`](live-run/terminal.log)) and the run record, with the recorded times and costs, sped up. The dashboard and GitHub frames are screenshots taken after the run; GitHub was opened signed out.
+
+| | |
+|---|---|
+| ![Pull request 6 on GitHub](live-run/pr.png) | ![The diff of pull request 6](live-run/pr-diff.png) |
+| ![Dashboard after the run](live-run/dashboard.png) | ![Dashboard view of a run in progress](live-run/dashboard-running.png) |
+
+The bottom-right image shows the dashboard's "Running now" view, added after this run. It is rendered from this run's real record, cut back to the point after the implement step; it was not captured while the run was going.
+
+**The first attempt failed before it started.** The token for the sandbox had been saved with spaces in it, as happens when a long token is copied from a wrapped terminal line. Inside the container Claude reported "Not logged in", and the run stopped at triage having used nothing. It is kept as the `Stuck` row on the dashboard. The factory now removes whitespace from the model token before passing it to the container.
+
+Raw records: [`data/runs/20261126-052839-trace-support-use-as-a-context-manag/`](data/runs/20261126-052839-trace-support-use-as-a-context-manag/), [`data/surety-pr-6.json`](data/surety-pr-6.json), [`data/surety-pr-6.diff`](data/surety-pr-6.diff), [`data/surety-issue-5.json`](data/surety-issue-5.json).
+
 ## Cost and who pays
 
 The dollar figures are what the same token usage would cost at Anthropic's API list prices. They are reported by the `claude` CLI after each agent call and added up by the factory.
@@ -128,9 +159,10 @@ Running the factory in GitHub Actions would be different: there it uses an `ANTH
 
 ```
 images/   7 images referenced above
+live-run/ the sandboxed Haiku run: video, GIF, screenshots, terminal log
 data/     raw GitHub records and diffs for the PRs and issues, run records, event logs,
           metrics, eval results, the monitor's proposed issue
-MD5SUMS   MD5 checksum of every file in images/ and data/
+MD5SUMS   MD5 checksum of every file in images/, live-run/ and data/
 ```
 
 To check that nothing in this folder was changed after it was committed:

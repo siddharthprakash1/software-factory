@@ -53,6 +53,15 @@ The factory was pointed at [`surety`](https://github.com/siddharthprakash1/suret
 
 These are the second runs of both issues: the repository was recreated in between. The rerun exposed a bug in the factory, which is written up with the fix in the proof.
 
+### A full run in the sandbox, on Haiku, for under a cent
+
+On 26 November 2026 the factory took [surety#5](https://github.com/siddharthprakash1/surety/issues/5) to [surety#6](https://github.com/siddharthprakash1/surety/pull/6) in 2 minutes 38 seconds, with every agent and every test running in the Docker sandbox and Haiku for every step (`--variant cheapest`). Three agent calls used **$0.007** at list prices, drawn from a Claude plan. The new tests failed on the original code (`2 failed`) and passed with the change (`185 passed`), so the PR was rated `risk:low`.
+
+<div align="center">
+<a href="docs/proof/live-run/live-run.mp4"><img src="docs/proof/live-run/live-run.gif" alt="Replay of the run's terminal log with elapsed time and running cost, then the dashboard and the pull request on GitHub" width="85%"></a>
+<br><sub>The terminal part replays the real log at its recorded times and costs, sped up. <a href="docs/proof/live-run/live-run.mp4">MP4</a> · <a href="docs/proof/live-run/terminal.log">raw log</a></sub>
+</div>
+
 Everything behind these numbers is in **[docs/proof](docs/proof/README.md)**: full-page screenshots, raw logs, eval results, costs, and a plain list of what has not been proven.
 
 ## How it works
@@ -170,7 +179,7 @@ For repos with a UI, an agent opens the running app in a browser and tries the c
 
 ### A dashboard for the whole thing
 
-What is waiting on a person, every run, cost by stage and by repository, and the lessons learned.
+What is running now (each step, its model and its cost so far, refreshed every 5 seconds), what is waiting on a person, every run, cost by stage and by repository, and the lessons learned. Run `npm run factory -- dashboard --serve 4300` and open http://localhost:4300 to watch usage while a run is going.
 
 <div align="center">
 <img src="docs/images/dashboard.jpg" alt="Dashboard showing run counts, delivery rate, total cost, runs waiting on a person, cost by stage and cost by repository" width="85%">
@@ -213,8 +222,8 @@ The factory comments on the issue at every stop: the PR link, the spec to approv
 
 | Command | What it does |
 |---|---|
-| `run <issue> [--repo <name>] [--pr]` | Take one issue through the pipeline. The issue is a markdown file, `<repo>#123`, or `gh:owner/repo#123`. |
-| `poll [--watch <seconds>]` | Pick up labelled GitHub issues (several at once), new human comments, and merged or closed PRs. |
+| `run <issue> [--repo <name>] [--pr] [--variant <name>]` | Take one issue through the pipeline. The issue is a markdown file, `<repo>#123`, or `gh:owner/repo#123`. `--variant cheapest` uses Haiku for everything with small limits. |
+| `poll [--watch <seconds>] [--variant <name>]` | Pick up labelled GitHub issues (several at once), new human comments, and merged or closed PRs. |
 | `resume <run-id> [--feedback "..."]` | The local way to comment: answer, approve, unblock or revise a run. |
 | `monitor [--repo <name>] [--auto]` | Check repo health and propose issues. `--auto` lets the factory pick them up itself. |
 | `eval <suite.json> [--variant a,b]` | Run a suite against named variants from the config and compare them. |

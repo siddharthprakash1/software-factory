@@ -13,6 +13,9 @@ const KEEP = new Set(['ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN']); // the a
 export function agentEnv(base = process.env) {
   const env = {};
   for (const [k, v] of Object.entries(base)) if (KEEP.has(k) || !SECRET.test(k)) env[k] = v;
+  // A token copied from a narrow terminal often picks up spaces where the line wrapped.
+  // Model tokens and keys never contain whitespace, so remove it.
+  for (const k of KEEP) if (env[k]) env[k] = env[k].replace(/\s+/g, '');
   // Let a nested agent start cleanly when the factory itself is launched from an agent session.
   delete env.CLAUDECODE;
   delete env.CLAUDE_CODE_ENTRYPOINT;

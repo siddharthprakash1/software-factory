@@ -12,7 +12,7 @@ import { readLessons, readPending, pendingRepos, approveLessons, rejectLessons }
 
 const USAGE = `Software factory
 
-  run <issue.md | repo#123 | gh:owner/repo#123> [--repo <name|path>] [--path <checkout>] [--pr]
+  run <issue.md | repo#123 | gh:owner/repo#123> [--repo <name|path>] [--path <checkout>] [--pr] [--variant <name>]
                                     take one issue through the pipeline
   resume <run-id> [--feedback "..."] answer, approve, unblock or revise a run
   poll [--watch <seconds>]           pick up labelled GitHub issues and new comments
@@ -60,7 +60,8 @@ function printEvents(run) {
 }
 
 const { cmd, args, flags } = parseArgs(process.argv.slice(2));
-const config = await loadConfig();
+// --variant picks a named override from config.variants for run, resume and poll too.
+const config = await loadConfig(cmd === 'eval' || cmd === 'replay' ? undefined : flags.variant);
 
 try {
   if (cmd === 'run' && args[0]) {

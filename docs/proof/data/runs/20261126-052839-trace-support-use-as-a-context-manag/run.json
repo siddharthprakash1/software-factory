@@ -1,0 +1,107 @@
+{
+  "id": "20261126-052839-trace-support-use-as-a-context-manag",
+  "issue": {
+    "title": "Trace: support use as a context manager",
+    "body": "Right now `Trace` in `src/surety/trace/jsonl.py` has to be closed by hand with `close()`, and a crash before that leaves the file open.\n\nMake `Trace` usable as a context manager:\n\n```python\nwith Trace(path) as t:\n    t.record({\"x\": 1})\n```\n\n- `__enter__` returns the trace itself.\n- `__exit__` closes the file, also when the block raises.\n- Add a test in `tests/test_trace.py` that uses `with` and checks the file is closed afterwards and the row was written.\n\nOnly touch `src/surety/trace/jsonl.py` and `tests/test_trace.py`.",
+    "url": "https://github.com/siddharthprakash1/surety/issues/5",
+    "github": "siddharthprakash1/surety",
+    "number": 5,
+    "source": "gh:siddharthprakash1/surety#5",
+    "repoName": "surety"
+  },
+  "repoName": "surety",
+  "repo": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\repos\\surety",
+  "github": "siddharthprakash1/surety",
+  "worktree": "C:\\Users\\DELL\\Desktop\\PROJECTS\\AI projects\\factory ai space\\.factory\\workspaces\\20261126-052839-trace-support-use-as-a-context-manag",
+  "branch": "factory/20261126-052839-trace-support-use-as-a-context-manag",
+  "base": "792d60d7366b767397049344aa15f0af70702edb",
+  "baseBranch": "main",
+  "openPr": true,
+  "status": "ready_for_review",
+  "next": "deliver",
+  "iteration": 1,
+  "budgetUsd": 1,
+  "costUsd": 0.006889190000000001,
+  "startedAt": "2026-11-26T05:28:40.867Z",
+  "lastSeenAt": "2026-11-26T05:28:40.867Z",
+  "feedbackLog": [],
+  "events": [
+    {
+      "at": "2026-11-26T05:28:50.426Z",
+      "stage": "triage",
+      "outcome": "automate/low",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.00230442,
+      "durationMs": 9555,
+      "tokensIn": 43015,
+      "tokensOut": 731
+    },
+    {
+      "at": "2026-11-26T05:29:48.907Z",
+      "stage": "implement",
+      "outcome": "attempt 1 committed",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.0024718400000000003,
+      "durationMs": 58090,
+      "tokensIn": 65646,
+      "tokensOut": 1203
+    },
+    {
+      "at": "2026-11-26T05:30:30.495Z",
+      "stage": "verify",
+      "outcome": "passed",
+      "durationMs": 41448
+    },
+    {
+      "at": "2026-11-26T05:30:58.354Z",
+      "stage": "fail_to_pass",
+      "outcome": "new tests fail on the original code",
+      "durationMs": 27854
+    },
+    {
+      "at": "2026-11-26T05:31:08.346Z",
+      "stage": "review",
+      "outcome": "approve",
+      "harness": "claude",
+      "model": "haiku",
+      "costUsd": 0.00211293,
+      "durationMs": 9894,
+      "tokensIn": 45048,
+      "tokensOut": 793
+    },
+    {
+      "at": "2026-11-26T05:31:18.906Z",
+      "stage": "deliver",
+      "outcome": "pr opened"
+    }
+  ],
+  "triage": {
+    "decision": "automate",
+    "complexity": "low",
+    "kind": "feature",
+    "reason": "Trace is a 17-line class that opens its file in __init__ and closes it in close(), so adding __enter__ and __exit__ is a single obvious edit. The issue names the only two files to touch, and the test file shows the existing style to follow.",
+    "plan": "In src/surety/trace/jsonl.py, add __enter__ (returns self) and __exit__ (calls self.close(), returns None so exceptions propagate). In tests/test_trace.py, add a test that uses `with Trace(path) as t:` to record one row, then asserts the row is in the file and t.f.closed is True. Optionally add a test where the block raises, asserting the file is closed and the exception propagates."
+  },
+  "editedAssertions": [],
+  "verifyLog": "$ uv run pytest -q   (in sandbox)\n........................................................................ [ 38%]\n........................................................................ [ 77%]\n.........................................                                [100%]\n185 passed, 1 skipped in 16.96s\nDownloading cpython-3.12.16-linux-x86_64-gnu (download) (33.1MiB)\n Downloaded cpython-3.12.16-linux-x86_64-gnu (download)\nUsing CPython 3.12.16\nCreating virtual environment at: /home/node/venv\nInstalled 25 packages in 8.69s\n\n",
+  "testNote": null,
+  "review": {
+    "verdict": "approve",
+    "summary": "Adds __enter__ and __exit__ to Trace so it can be used in a with block, closing the file on exit including when the block raises. Two tests cover the normal path (row written, file closed) and the exception path (file closed, exception propagated, row written).",
+    "comments": [],
+    "out_of_scope": []
+  },
+  "scopeNotes": [],
+  "risk": {
+    "level": "low",
+    "reasons": [],
+    "lines": 29,
+    "files": 2
+  },
+  "pr": "https://github.com/siddharthprakash1/surety/pull/6",
+  "note": "https://github.com/siddharthprakash1/surety/pull/6",
+  "endedAt": "2026-11-26T05:31:18.909Z",
+  "notifiedPr": true
+}
