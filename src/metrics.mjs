@@ -25,7 +25,10 @@ export function computeMetrics(runs = listRuns().filter((r) => !r.eval)) {
     }
   }
   const delivered = runs.filter((r) => DELIVERED.includes(r.status));
-  const unaided = delivered.filter((r) => !r.events.some((e) => e.stage === 'human'));
+  // Help means a person steered the work. Merging, closing or reverting the PR afterwards is a
+  // decision about the result, not help with it.
+  const steered = (e) => e.stage === 'human' && !/^pr (merged|closed)$|^merged change was reverted$/.test(e.outcome);
+  const unaided = delivered.filter((r) => !r.events.some(steered));
   const total = runs.reduce((sum, r) => sum + r.costUsd, 0);
   // Outcomes of pull requests that a person has decided on.
   const decided = runs.filter((r) => r.pr && ['merged', 'closed'].includes(r.status));

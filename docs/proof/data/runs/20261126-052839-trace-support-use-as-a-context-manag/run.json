@@ -17,7 +17,7 @@
   "base": "792d60d7366b767397049344aa15f0af70702edb",
   "baseBranch": "main",
   "openPr": true,
-  "status": "ready_for_review",
+  "status": "merged",
   "next": "deliver",
   "iteration": 1,
   "budgetUsd": 1,
@@ -75,6 +75,11 @@
       "at": "2026-11-26T05:31:18.906Z",
       "stage": "deliver",
       "outcome": "pr opened"
+    },
+    {
+      "at": "2026-11-26T05:41:28.596Z",
+      "stage": "human",
+      "outcome": "pr merged"
     }
   ],
   "triage": {
@@ -101,7 +106,9 @@
     "files": 2
   },
   "pr": "https://github.com/siddharthprakash1/surety/pull/6",
-  "note": "https://github.com/siddharthprakash1/surety/pull/6",
+  "note": "https://github.com/siddharthprakash1/surety/pull/6 was merged",
   "endedAt": "2026-11-26T05:31:18.909Z",
-  "notifiedPr": true
+  "notifiedPr": true,
+  "mergedAt": "2026-11-26T05:41:03Z",
+  "closedAt": "2026-11-26T05:41:03Z"
 }

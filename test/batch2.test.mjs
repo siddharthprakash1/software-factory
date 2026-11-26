@@ -87,6 +87,9 @@ test('closed PRs keep the reason a person gave, and merges and reverts are count
   const { out } = w.factory('metrics');
   assert.match(out, /decided by a person: 2\s+merge rate: 50%\s+reverted: 1/);
   assert.match(out, /1 x Closing: we decided not to change app\.txt after all\./);
+  // A person merging the PR is not help with the work: the merged run still counts as unaided
+  // (1 of the 2 runs; the closed one is not delivered).
+  assert.match(out, /without human help: 50%/);
 });
 
 test('the sandbox mounts only the worktree and passes model access by name', () => {
