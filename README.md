@@ -307,3 +307,7 @@ test/                   offline test suite with a scripted agent and a fake GitH
 ## Background
 
 The design follows Zach Lloyd's "The guide to software factories". The memory loop follows the "knowledge factory" idea from LangChain.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
