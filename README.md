@@ -13,6 +13,10 @@ logs what every step cost, takes direction from your comments, and learns from i
 [![Tests](https://github.com/siddharthprakash1/software-factory/actions/workflows/test.yml/badge.svg)](https://github.com/siddharthprakash1/software-factory/actions/workflows/test.yml)
 [![Proof: real PRs](https://img.shields.io/badge/proof-real%20pull%20requests-d29922)](docs/proof/README.md)
 
+<a href="docs/proof/video/software-factory-16x9.mp4"><img src="docs/proof/video/poster.jpg" alt="Play the 83-second video: one real issue to merged pull request in 2 minutes 38 seconds" width="85%"></a>
+
+**▶ [Watch the 83-second video](docs/proof/video/software-factory-16x9.mp4)** ([vertical cut](docs/proof/video/software-factory-9x16.mp4)): one real issue to a merged PR, built from the run's own record.
+
 <img src="docs/images/pipeline.svg" alt="Pipeline: issue, triage, optional spec, implement, verify, optional browser check, review, pull request, with a feedback loop back to implement and a memory of lessons" width="100%">
 
 </div>

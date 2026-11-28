@@ -131,6 +131,10 @@ The bottom-right image shows the dashboard's "Running now" view, added after thi
 
 **The first attempt failed before it started.** The token for the sandbox had been saved with spaces in it, as happens when a long token is copied from a wrapped terminal line. Inside the container Claude reported "Not logged in", and the run stopped at triage having used nothing. It is kept as the `Stuck` row on the dashboard. The factory now removes whitespace from the model token before passing it to the container.
 
+### The motion video
+
+[`video/software-factory-16x9.mp4`](video/software-factory-16x9.mp4) (1920x1080, 83 s, narrated) and a vertical cut, [`video/software-factory-9x16.mp4`](video/software-factory-9x16.mp4), tell this run's story for people who won't read the tables. The terminal, counters, pipeline and test results in it are animations rebuilt from this run's record and log, not screen recordings. The GitHub and dashboard shots are the screenshots above. Time is compressed; the step times and costs shown are the recorded ones, and every dollar figure is usage at API list prices. It was made with free tools: Remotion, a music bed synthesised in code, free sound effects and a synthetic voice.
+
 Raw records: [`data/runs/20261126-052839-trace-support-use-as-a-context-manag/`](data/runs/20261126-052839-trace-support-use-as-a-context-manag/), [`data/surety-pr-6.json`](data/surety-pr-6.json), [`data/surety-pr-6.diff`](data/surety-pr-6.diff), [`data/surety-issue-5.json`](data/surety-issue-5.json).
 
 ## Cost and who pays
@@ -162,9 +166,10 @@ Running the factory in GitHub Actions would be different: there it uses an `ANTH
 ```
 images/   7 images referenced above
 live-run/ the sandboxed Haiku run: video, GIF, screenshots, terminal log
+video/    the motion video (16:9 and 9:16) and its poster frame
 data/     raw GitHub records and diffs for the PRs and issues, run records, event logs,
           metrics, eval results, the monitor's proposed issue
-MD5SUMS   MD5 checksum of every file in images/, live-run/ and data/
+MD5SUMS   MD5 checksum of every file in images/, live-run/, video/ and data/
 ```
 
 To check that nothing in this folder was changed after it was committed:
